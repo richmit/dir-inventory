@@ -1,0 +1,34 @@
+
+* Introduction
+
+This directory contains a shell script and a C program that
+both do the same thing -- compute some checksum-like data
+about a file given on the command line.  The C program is more
+than 4.5x faster than the script.  Both programs have identical
+output on most UNIX platforms.
+
+In addition, a small bash script to drive the checksum program
+is in this directory.  As an alternative, one can also use the
+super charged version in the dirTravC directory.
+
+* Typical command line use
+
+#+begin_src sh
+time ~/csumf.sh * 2>../errorFile.txt | tee ../csumFile.txt
+#+end_src
+
+* Files
+
+#+ATTR_HTML: :align center
+|------------+-------------------------------------------|
+| File Name  | Description                               |
+|------------+-------------------------------------------|
+| README.txt | This file                                 |
+| cmpCSUM.pl | Compare two cehcksum files                |
+| csumf.sh   | Checksum a tree with a file checksum tool |
+| makefile   | Build mjrCSUM from mjrCSUM.c              |
+| mjrCSUM    | Compled version of mjrCSUM.c              |
+| mjrCSUM.c  | Source for C csum of single file          |
+| mjrCSUM.sh | Shell script with same output as mjrCSUM  |
+| mjrCSUM.rb | Ruby script  with same output as mjrCSUM  |
+|------------+-------------------------------------------|
