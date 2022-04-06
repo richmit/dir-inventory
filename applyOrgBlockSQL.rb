@@ -1,14 +1,15 @@
-#!/bin/bash /home/richmit/bin/ruby20
+#!/bin/env ruby
 # -*- Mode:Ruby; Coding:us-ascii-unix; fill-column:158 -*-
 ################################################################################################################################################################
 ##
-# @file      mjrCSUM.rb
+# @file      applyOrgBlockSQL.rb
 # @author    Mitch Richling <https://www.mitchr.me>
-# @brief     Compute a file checksum.@EOL
-# @std       Ruby2.0
-# @copyright 
+# @brief     Extract a code block from an org-mode document, and run it.@EOL
+# @keywords  checksum filesystem directory sub-directory tree inventory sqlite database
+# @std       Ruby 2.0
+# @copyright
 #  @parblock
-#  Copyright (c) 1997,2005,2016, Mitchell Jay Richling <https://www.mitchr.me> All rights reserved.
+#  Copyright (c) 2016, Mitchell Jay Richling <https://www.mitchr.me> All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 #
@@ -29,46 +30,52 @@
 ################################################################################################################################################################
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
-require 'digest/md5' 
-require 'digest/sha1' 
+nameOfDB    = ARGV[0]
+nameOfBlock = ARGV[1]
+nameOfFile  = ARGV[2] || 'readme.org'
 
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------
-outputVersion = 2
+if(nameOfDB.match(/^-+h/)) then
+  puts('                                                                       ')
+  puts('Use: applyOrgBlockSQL.rb name_of_db name_of_block [name_of_org_file]   ')
+  puts('                                                                       ')
+  puts('  Extract a named code block from an org file (readme.org by default), ')
+  puts('  and apply to the named DB.                                           ')
+  puts('                                                                       ')
+  exit
+end
 
-fileName = ARGV[0]
+if( !(FileTest.exist?(nameOfDB)))
+  puts("ERROR: DB file could not be found: #{nameOfDB}")
+end
+if( !(FileTest.exist?(nameOfFile))) then
+  puts("ERROR: ORG file could not be found: #{nameOfFile}")
+end
 
-open(fileName, "rb") do |file|
+blockStartRe = Regexp.new("^#\\+NAME:\s*#{nameOfBlock}\s*$")
 
-  sha1 = Digest::SHA1.new
-  md5  = Digest::MD5.new
-
-  statData = File::Stat.new(file)
-
-  numBinChars = numChars = numLines = 0
-  buffer = ''
-  while (not file.eof) 
-    file.read(512, buffer)
-    sha1.update(buffer)
-    md5.update(buffer)
-    buffer.each_byte do |c|
-      if ((c<32) || (c>126)) then
-        numBinChars += 1
+foundBlock = false
+codeInOurBlock = 'sqlite3 -header ' + nameOfDB + ' "'
+open(nameOfFile, 'r') do |inOrgFile|
+  inOrgFile.each_line do |line|
+    if(foundBlock) then
+      if(line.match(/^#\+end_src\s*$/)) then
+        break
+      else
+        if( !(line.match(/^#\+begin_src\s+sql/))) then
+          codeInOurBlock += (' ' + line.chomp.lstrip)
+        end
       end
-      numChars += 1
-      if (c == 10)
-        numLines += 1
+    else
+      if(blockStartRe.match(line)) then
+        foundBlock = true
       end
     end
   end
+end
+codeInOurBlock += '"'
 
-  # Print out the results
-  printf("%u ", Time.now.to_i)
-  if(outputVersion >= 2) then
-      printf("%u ", statData.atime)
-      printf("%u ", statData.ctime)
-      printf("%u ", statData.mtime)
-  end
-  printf("MD5:%s", md5.to_s)
-  printf(" SHA1:%s", sha1.to_s)
-  printf(" %u %u %u %s\n", numBinChars, numLines, numChars, fileName)
+if(foundBlock) then
+  system(codeInOurBlock);
+else
+  puts("ERROR: Could not find block: #{nameOfBlock}")
 end

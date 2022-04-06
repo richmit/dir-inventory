@@ -1,4 +1,4 @@
-#!/bin/bash /home/richmit/bin/ruby20
+#!/bin/env ruby
 # -*- Mode:Ruby; Coding:us-ascii-unix; fill-column:158 -*-
 ################################################################################################################################################################
 ##
@@ -35,6 +35,8 @@
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 require 'optparse'
 require 'optparse/time'
+require 'sqlite3'
+require 'set'
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 allCols     = ['NL', 'NR', 'H', 'CT', 'MT', 'SZ', 'HASH', 'NAME']
@@ -42,19 +44,20 @@ srchArgPat  = Regexp.new('-+s(' + allCols.join('|') + ')=(.+)$')
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 pColTitles  = true
-searchArg   = [[ 'H'  , '!=' ],
+searchArg   = Array.new
+searchArgD  = [[ 'H'  , '!=' ],
                [ 'CT' , '!=' ],
                [ 'MT' , '!=' ],
                [ 'SZ' , '!=' ]]
-searchArgD  = true
 csumToRep   = [ 0, 1 ]
 csumFiles   = Array.new
 pCols       = Array.new(allCols)
+encodeFN    = false
 pPrefix     = true
 pDups       = false
 doPrefix    = true
-debug       = 0
-csumType    = 'md5'
+debug       = 3
+dircsumMode = false
 pColsFmt    = { 'NL'   => "-3", 
                 'NR'   => "-3",
                 'H'    => "-1",
@@ -64,87 +67,151 @@ pColsFmt    = { 'NL'   => "-3",
                 'HASH' => "-36",
                 'NAME' => 0 }
 opts = OptionParser.new do |opts|
-  opts.banner = "Usage: cmpCSUM.rb [options] files [files...]"
+  opts.banner = "Usage: cmpCSUM.rb [options] [file1 [file2]]"
   opts.separator ""
   opts.separator "Options:"
-  opts.on("-h",        "--help",             "Show this message")                 { puts opts; exit; }
-  opts.on(             "--debug INT",        "Set debug level")                   { |v| debug=v.to_i; }
-  opts.on(             "--doPrefix Y/N",     "Compute filename prifex")           { |v| doPrefix=(v.match(/^(Y|y|T|t)/)); }
-  opts.on(             "--pDups Y/N",        "Print files with same content")     { |v| pDups=(v.match(/^(Y|y|T|t)/)); }
-  opts.on(             "--pPrefix Y/N",      "Print found prefixes (if -p)")      { |v| pPrefix=(v.match(/^(Y|y|T|t)/)); }
-  opts.on(             "--csum  <md5|sha1>", "The checksum to use")               { |v| csumType=v; 
-                                                                                        pColsFmt['HASH'] = ( csumType == 'md5' ? "-31" : "-40" ); }
-  opts.on(             "--pCols COLS",       "Cols to print (comma seporated)")   { |v| pCols = v.split(/\s*,\s*/); }
-  opts.on(             "--pColTitles Y/N",   "Print col titles")                  { |v| pColTitles=(v.match(/^(Y|y|T|t)/)); }
-  opts.on(             "--sALL",             "Show all patterns")                 { |v| searchArg = nil; s
-                                                                                        earchArgD = false; }
-  opts.on(             "--backup",           'Usefull for backups')               { |v| pPrefix = false; 
-                                                                                        pColTitles = false; 
-                                                                                        searchArg = [ ['H', '|'],  ['H', '>'] ]; 
-                                                                                        searchArgD = false;                                                                                         pCols = [ 'NAME' ]; }
-  allCols.each do |colName|
-    opts.on("--s#{colName} REGEX", "Regex for #{colName} column") { |v| if (searchArgD) then
-                                                                          searchArg = Array.new
-                                                                          searchArgD = false
-                                                                          searchArg = [ [ colName, v ] ]
-                                                                        else
-                                                                          searchArg.push([ colName, v ])
-                                                                        end }    
-  end
-  opts.separator ""
-  opts.separator ""
-  opts.separator "  The '-sCOL' options are search criteria on output columns. Search criteria -- i.e. which file data lines to"
-  opts.separator "  print. 'COL' is the name of a column, or the keyword 'ALL'. When a column other than NAME is given, then it"
-  opts.separator "  will be used to match the first part of the printed output for that column.  When NAME is the column, it"
-  opts.separator "  will be used as a regexp against the NAME col.  When appearing multiple times, these options combine with"
-  opts.separator "  'OR'.  The ALL keyword directs the script to display a line for Every file -- even the ones that are the"
-  opts.separator "  same on both sides. The default is to print if anything is different.  Any option of this type will destroy"
-  opts.separator "  the default setting."
-  opts.separator ""
-  opts.separator "  The -backup option produces output useful for backups"
-  opts.separator "  This is useful when one wishes to have a list of 'new' files or files that have 'changed' in the case when"
-  opts.separator "  the first checksum file is assumed to be for the backup directory while the second is assumed to be the"
-  opts.separator "  current working directory from which the backup was generated."
-  opts.separator "  This option is equivalent to the following options: -pPrefix N -pColTitles N -pCols NAME -sH \\| -sH \\>"
-  opts.separator ""
-  opts.separator "  Output:"
-  opts.separator ""
-  opts.separator "  One file-name per line."
-  opts.separator "    * NL: Number of copies on left with same check-sum"
-  opts.separator "    * NR: Number of copies on right with same check-sum"
-  opts.separator "    * CS: Checksum (content) difference between current file and file on other side of same name:"
-  opts.separator "      = same"
-  opts.separator "      | different"
-  opts.separator "      < name on left only (but if NR>0, then a copy exists on right with different name)"
-  opts.separator "      > name on right only (but if NL>0, then a copy exists on left with different name)"
-  opts.separator "    * ctime: Create time"
-  opts.separator "      .. N/A -- file is missing on one side"
-  opts.separator "      == same"
-  opts.separator "      <U left older"
-  opts.separator "      >U left newer"
-  opts.separator "         Where U is one of: (s)econds, (h)ours, (d)ays, (w)eeks, (m)onths, (y)ears"
-  opts.separator "    * mtime: Modify Time"
-  opts.separator "      same notation as ctime "
-  opts.separator "    * size: File Size"
-  opts.separator "      .. N/A -- file is missing on one side"
-  opts.separator "      == same"
-  opts.separator "      <U left smaller"
-  opts.separator "      >U left bigger"
-  opts.separator "         Where U is one of: (B)ytes, (K)ilobytes, (M)egabytes, (G)igabytes"
-  opts.separator ""
-  opts.separator ""
+  opts.on("-h",        "--help",             "Show this message")                 { puts opts; exit;                           }
+  opts.on("-v",        "--debug INT",        "Set debug level")                   { |v| debug=v.to_i;                          }
+  opts.separator "                                       0 .. Print report                                                     "
+  opts.separator "                                       1 .. Print ERRORS                                                     "
+  opts.separator "                                       2 .. Print WARNING                                                    "
+  opts.separator "                                       3 .. Print INFO (default)                                             "
+  opts.separator "                                       4 .. Print STATUS                                                     "
+  opts.separator "                                       5 .. Print Scan Meta Data                                             "
+  opts.separator "                                       6 .. Print DEBUG                                                      "
+  opts.on("-U",        "--dircsum",          "Set dircsum mode")                  { dircsumMode = true;                        }
+  opts.separator "                                       If no files are provided, then the last two .dircsum DBs are used.    "
+  opts.separator "                                       If a single file is provided, then the last .dircsum DB is used as    "
+  opts.separator "                                         the left file while the named file is used as the right one.        "
+  opts.on(             "--encodeFN Y/N",     "Encode filenames")                  { |v| encodeFN=(v.match(/^(Y|y|T|t)/));      }
+  opts.separator "                                       Printed filenames are transformed via .dump, and spaces are           "
+  opts.separator "                                       replaced with \\x20.                                                  "
+  opts.on(             "--doPrefix Y/N",     "Compute filename prefix")           { |v| doPrefix=(v.match(/^(Y|y|T|t)/));      }
+  opts.on(             "--pDups Y/N",        "Print files with same content")     { |v| pDups=(v.match(/^(Y|y|T|t)/));         }
+  opts.on(             "--pPrefix Y/N",      "Print found prefixes (if -p)")      { |v| pPrefix=(v.match(/^(Y|y|T|t)/));       }
+  opts.on(             "--pCols COLS",       "Cols to print (comma separated)")   { |v| pCols = v.split(/\s*,\s*/);            }
+  opts.on(             "--pColTitles Y/N",   "Print col titles")                  { |v| pColTitles=(v.match(/^(Y|y|T|t)/));    }
+  opts.on(             "--sNL INT_COMPARE",  "Search criteria for NL column")     { |v| searchArg.push(['NL',   v]);           }
+  opts.on(             "--sNR INT_COMPARE",  "Search criteria for NR column")     { |v| searchArg.push(['NR',   v]);           }
+  opts.separator "                                       The INT_COMPARE used for --sNL & --sNR is an integer string           "
+  opts.separator "                                       like 'o#' where 'o' is a comparison operator and '#' is an integer.   "
+  opts.separator "                                       The operator, 'o', may be one of '!', '=', '<', or '>'.               "
+  opts.separator "                                       Ex: --sNL '!1' lists lines for which NL != 1                          "
+  opts.on(             "--sH PATTERN",       "Search criteria for H column")      { |v| searchArg.push(['H',    v]);           }
+  opts.on(             "--sCT PATTERN",      "Search criteria for CT column")     { |v| searchArg.push(['CT',   v]);           }
+  opts.on(             "--sMT PATTERN",      "Search criteria for MT column")     { |v| searchArg.push(['MT',   v]);           }
+  opts.on(             "--sSZ PATTERN",      "Search criteria for SZ column")     { |v| searchArg.push(['SZ',   v]);           }
+  opts.separator "                                       The PATTERN used for --sH, --sCT, --sMT, & --sSZ are used to match    "
+  opts.separator "                                       the starting bytes of the corresponding column. If the PATTERN        "
+  opts.separator "                                       starts with an exclamation point (!), then the match is reversed.     "
+  opts.separator "                                       Ex: --sH '!=' matchs lines not starting with '=' in the 'H' column.   "
+  opts.on(             "--sHASH REGEX",      "Search criteria for HASH column")   { |v| searchArg.push(['HASH', v]);           }
+  opts.separator "                                       Select lines for which the REGEX matches the HASH column.             "
+  opts.on(             "--sNAME REGEX",      "Search criteria for NAME column")   { |v| searchArg.push(['NAME', v]);           }
+  opts.separator "                                       Select lines for which the REGEX matches the NAME column.             "
+  opts.on(             "--soAND",  "Boolean search operator")                     { searchArg.push(['SOP', :sop_and]);         }
+  opts.on(             "--soOR",   "Boolean search operator")                     { searchArg.push(['SOP', :sop_or]);          }
+  opts.separator "                                       The --soAND & --soOR arguments change the way search criteria are     "
+  opts.separator "                                       used.  Without them all search criteria are ORed together. With       "
+  opts.separator "                                       them the search criteria and operators are evaluated as an RPN        "
+  opts.separator "                                       expression with a FORTH-like stack.                                   "
+  opts.separator "                                                                                                             "
+  opts.separator "Output:                                                                                                      "
+  opts.separator "  The output generated on STDOUT is designed to be easily consumable by traditional UNIX tools like grep     "
+  opts.separator "  and AWK.  Accordingly the format is line based with a single line per file.  Each line consists of eight   "
+  opts.separator "  columns separated by a single space.  The columns:                                                         "
+  opts.separator "    - NL .... Number of copies on left with same check-sum.                                                  "
+  opts.separator "    - NR .... Number of copies on right with same check-sum.                                                 "
+  opts.separator "              Both NL & NR are normally 3 digit, zero padded integers; however, they may be longer.          "
+  opts.separator "              Both NL & NR will be '???' if hashes in the DBs are not usable.                                "
+  opts.separator "                NOTE: Usually the reason hashes are not usable is the two files use different hash types.    "
+  opts.separator "                      It can also happen that one of the files is simply missing hash values altogether      "
+  opts.separator "                      or that the hashes are unreliable (csumNew used with '-k name' or '-k 1k').            "
+  opts.separator "    - H ..... Checksum (content) difference between current file and file on other side of same name:        "
+  opts.separator "              This field is precisely one character:                                                         "
+  opts.separator "                - = file name exists on left & right and hashes are the same                                 "
+  opts.separator "                - | file name exists on left & right and hashes are different                                "
+  opts.separator "                - ? file name exists on left & right and hashes are not usable                               "
+  opts.separator "                - < name on left only (but if NR>0, then a copy exists on right with different name)         "
+  opts.separator "                - > name on right only (but if NL>0, then a copy exists on left with different name)         "
+  opts.separator "    - CT .... Create time                                                                                    "
+  opts.separator "              This field is precisely two characters:                                                        "
+  opts.separator "                - .. N/A -- file is missing on one side                                                      "
+  opts.separator "                - == same                                                                                    "
+  opts.separator "                - <U left older                                                                              "
+  opts.separator "                - >U left newer                                                                              "
+  opts.separator "                -    Where U is one of: (s)econds, (h)ours, (d)ays, (w)eeks, (m)onths, (y)ears               "
+  opts.separator "    - MT .... Modify Time                                                                                    "
+  opts.separator "              Same notation as ctime                                                                         "
+  opts.separator "    - SZ .... File Size                                                                                      "
+  opts.separator "              This field is precisely two characters:                                                        "
+  opts.separator "              .. N/A -- file is missing on one side                                                          "
+  opts.separator "              == same                                                                                        "
+  opts.separator "              <U left smaller                                                                                "
+  opts.separator "              >U left bigger                                                                                 "
+  opts.separator "                 Where U is one of: (B)ytes, (K)ilobytes, (M)egabytes, (G)igabytes                           "
+  opts.separator "    - HASH .. File Content Hash (in hex)                                                                     "
+  opts.separator "              This field will be the same length for all files listed:                                       "
+  opts.separator "                 Unusable hash ... 4 question mark characters                                                "
+  opts.separator "                 SHA1 ............ 40 characters                                                             "
+  opts.separator "                 SHA256 .......... 64 characters                                                             "
+  opts.separator "                 MD5 ............. 32 characters                                                             "
+  opts.separator "    - NAME .. File Name                                                                                      "
+  opts.separator "                                                                                                             "
+  opts.separator "Examples:                                                                                                    "
+  opts.separator "  - List file names for new files and files with content changes.  Usefull for a dynamci backup scheme.      "
+  opts.separator "      --pPrefix N --pColTitles N --pCols NAME --sH '|' --sH '>'                                              "
+  opts.separator "  - Show all changes, but ignore ctime.  Usefull for comparison after a copy operation.                      "
+  opts.separator "      --sH '!=' --sSZ '!=' --sMT '!='                                                                        "
+  opts.separator "  - Show all lines even without changes.  Works because H can't be 'X'                                       "
+  opts.separator "      --sH '!X'                                                                                              "
+  opts.separator "  - Show no lines even without changes.  Usefull for debugging.  Works because H can't be 'X'                "
+  opts.separator "      --sH 'X'                                                                                               "
+  opts.separator "                                                                                                             "
 end
 opts.parse!(ARGV)
-csumFiles=Array.new(ARGV)
+csumFiles=Array.new(2)
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
-# Make sure the arguments are OK
-if (csumFiles.length > 2) then
-  STDERR.puts("ERROR: too many checksum files to process: #{csumFiles.inspect}!")
-  exit
-elsif (csumFiles.length < 2) then
-  STDERR.puts("ERROR: too few checksum files to process: #{csumFiles.inspect}!")
-  exit
+# Populate csumFiles & check that we got the correct number of files
+if(dircsumMode) then
+  if(FileTest.exist?('.dircsum')) then
+    oldFileFiles = Dir.glob('.dircsum/??????????????_dircsum.sqlite').sort
+    dircsumModeLastFile       = oldFileFiles.pop
+    if (dircsumModeLastFile == nil) then
+      if(debug>=1) then STDERR.puts("ERROR: No DB files found in .dircsum directory in -U mode!") end
+      exit
+    end
+    dircsumModeNextToLastFile = oldFileFiles.pop
+    if (ARGV.length == 0) then
+      if (dircsumModeNextToLastFile == nil) then
+        if(debug>=1) then STDERR.puts("ERROR: At least two DB required in .dircsum directory in -U mode and no file arguments!") end
+        exit
+      end
+      csumFiles[0] = dircsumModeNextToLastFile
+      csumFiles[1] = dircsumModeLastFile
+    elsif (ARGV.length == 1) then
+      csumFiles[0] = dircsumModeLastFile
+      csumFiles[1] = ARGV[0]; 
+    else 
+      if(debug>=1) then STDERR.puts("ERROR: only one file may be listed on the command line in -U mode!") end
+      exit
+    end
+  else
+    if(debug>=1) then STDERR.puts("ERROR: Missing .dircsum direcotyr in -U mode!") end
+    exit
+  end
+else
+  if (csumFiles.length ==  2) then
+    csumFiles[0] = ARGV[0]; 
+    csumFiles[1] = ARGV[1]; 
+  elsif (csumFiles.length > 2) then
+    if(debug>=1) then STDERR.puts("ERROR: too many checksum files to process: #{ARGV.inspect}!") end
+    exit
+  elsif (csumFiles.length < 2) then
+    if(debug>=1) then STDERR.puts("ERROR: too few checksum files to process: #{ARGV.inspect}!") end
+    exit
+  end
 end
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -169,48 +236,51 @@ end
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Read in the data files...
-if(debug>0) then STDERR.puts("INFO: File Read") end
+if(debug>=4) then STDERR.puts("STATUS: File Read") end
 fileInfo  = Hash.new
-['N2SN', 'N2H', 'N2CT', 'N2MT', 'N2SZ', 'H2N', 'PFIX'].each do |key|          # Create all the arrays
+['N2SN', 'N2H', 'N2CT', 'N2MT', 'N2SZ', 'H2N', 'PFIX', 'META'].each do |key|          # Create all the arrays
   fileInfo[key]  = Array.new
 end
-csumFiles.each_with_index do |fileName, i|
-  if(debug>0) then STDERR.puts("INFO:    Reading file: #{fileName}") end
-  ['N2SN', 'N2H', 'N2CT', 'N2MT', 'N2SZ', 'H2N'].each do |key|                # Init all the fileInfo members
-    fileInfo[key][i]  = Hash.new
+csumFiles.each_with_index do |fileName, fileIdx|
+  if(debug>=4) then STDERR.puts("STATUS:    Reading file: #{fileName}") end
+  ['N2SN', 'N2H', 'N2CT', 'N2MT', 'N2SZ', 'H2N', 'META'].each do |key|                # Init all the fileInfo hash members
+    fileInfo[key][fileIdx]  = Hash.new
   end
-  open(fileName, 'r') do |file|
-    fileFormat = nil
-    file.each_line do |line|
-      timeStamp, atime, ctime, mtime, md5, sha1, prtCharCnt, lineCnt, charCnt, fname = line.chomp.split(/ /, 10)
+  SQLite3::Database.new(fileName) do |dbCon|
+    # Collect scan meta data
+    dbCon.execute("SELECT mkey, mvalue FROM meta;").each do |mkey, mvalue|
+      fileInfo['META'][fileIdx][mkey]  = mvalue;
+    end
+    # Collect scan file data
+    dbCon.execute("SELECT ctime, mtime, csum, bytes, relpn FROM annofsobj WHERE ftype = 'r';").each do |row|
+      ctime, mtime, csum, charCnt, fname = row
       if (doPrefix) then                                                      # Find the maximal path-name prefix
-        if (fileInfo['PFIX'][i]) then
-          fileInfo['PFIX'][i].length.downto(0) do |j|
-            if (fileInfo['PFIX'][i].start_with?(fname[0,j])) then
-              fileInfo['PFIX'][i] = fname[0,j]
+        if (fileInfo['PFIX'][fileIdx]) then
+          fileInfo['PFIX'][fileIdx].length.downto(0) do |j|
+            if (fileInfo['PFIX'][fileIdx].start_with?(fname[0,j])) then
+              fileInfo['PFIX'][fileIdx] = fname[0,j]
               break
             end
           end
         else
-          fileInfo['PFIX'][i] = fname;
+          fileInfo['PFIX'][fileIdx] = fname;
         end
       end
-      csum = ( csumType=='md5' ? md5 : sha1 )
-      fileInfo['N2H'][i][fname]  = csum                                       # Store away the data...
-      fileInfo['N2SN'][i][fname] = fname
-      fileInfo['N2CT'][i][fname] = ctime.to_i
-      fileInfo['N2MT'][i][fname] = mtime.to_i
-      fileInfo['N2SZ'][i][fname] = charCnt.to_i
-      fileInfo['H2N'][i][csum]   = (fileInfo['H2N'][i][csum] || Array.new).push(fname)
+      fileInfo['N2H'][fileIdx][fname]  = csum                                       # Store away the data...
+      fileInfo['N2SN'][fileIdx][fname] = fname
+      fileInfo['N2CT'][fileIdx][fname] = ctime.to_i
+      fileInfo['N2MT'][fileIdx][fname] = mtime.to_i
+      fileInfo['N2SZ'][fileIdx][fname] = charCnt.to_i
+      fileInfo['H2N'][fileIdx][csum]   = (fileInfo['H2N'][fileIdx][csum] || Array.new).push(fname)
     end
-  end
+  end      
 end
-if(debug>0) then STDERR.puts("INFO:    File Reads complete") end
+if(debug>=4) then STDERR.puts("STATUS:    File Reads complete") end
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Post-process the data
 if (doPrefix) then
-  if(debug>0) then STDERR.puts("INFO: Computing short names") end
+  if(debug>=4) then STDERR.puts("STATUS: Computing short names") end
   fileInfo['N2H'].each_index do |i|
     if (fileInfo['PFIX'][i].length > 0) then
       prefixRe = Regexp.new('^' + fileInfo['PFIX'][i])
@@ -222,34 +292,76 @@ if (doPrefix) then
 end
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
-if(debug>0) then STDERR.puts("INFO: Build up the search patterns from the inputs") end
-searchCriteria = nil
-if ( !(searchArg.nil?)) then
-  searchCriteria = Array.new
-  searchArg.each do |tag, pat| 
-    if    (tag.upcase == 'NAME') then
-      searchCriteria.push( [ tag, Regexp.new(pat) ] )
-    elsif (tmp=pat.match(/^(!{0,1})(.+)$/i)) then
-      searchCriteria.push([tag, [ (tmp[1].upcase == '!'), tmp[2]] ])
+if(debug>=4) then STDERR.puts("STATUS: Build up the search patterns from the inputs") end
+haveSearchExpr = false;
+searchCriteria = Array.new
+if (searchArg.length == 0) then
+  searchArg = searchArgD
+end
+searchArg.each do |tag, pat| 
+  if    ((tag.upcase == 'NAME') || (tag.upcase == 'HASH')) then
+    searchCriteria.push( [ tag, Regexp.new(pat) ] )
+  elsif (tag.upcase == 'SOP') then
+    searchCriteria.push([ tag, pat ])
+    haveSearchExpr = true;
+  elsif ((tag.upcase == 'NL') || (tag.upcase == 'NR')) then
+    if (tmp=pat.match(/^([!=<>])([0-9]+)$/i)) then
+      searchCriteria.push([tag, [ tmp[1], tmp[2].to_i ] ])
     else
-      STDERR.puts("ERROR: Bad search argument: #{tag.inspect} => #{pat.inspect}!")
+      if(debug>=1) then STDERR.puts("ERROR: Bad numeric search argument: #{tag.inspect} => #{pat.inspect}!") end
+      exit
+    end
+  else
+    if (tmp=pat.match(/^(!{0,1})(.+)$/i)) then
+      searchCriteria.push([tag, [ (tmp[1].upcase == '!'), tmp[2] ] ])
+    else
+      if(debug>=1) then STDERR.puts("ERROR: Bad search argument: #{tag.inspect} => #{pat.inspect}!") end
       exit
     end
   end
 end
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
-if(debug>0) then STDERR.puts("INFO: Printing report") end
-if (pPrefix && doPrefix) then
-  puts("< Prefix: #{fileInfo['PFIX'][0].inspect}")
-  puts("> Prefix: #{fileInfo['PFIX'][1].inspect}")
+if(debug>=4) then STDERR.puts("STATUS: Checking checksums") end
+csumsGood = true;
+csumList = csumToRep.map { |fileIdx| fileInfo['META'][fileIdx]['csum'] }
+if (csumList.uniq.length != 1) then
+  if(debug>=2) then STDERR.puts("WARNING: File checksums are inconsistant: #{csumList[0]} vs #{csumList[1]}") end
+  csumsGood = false;
+else
+  if (csumList[0] == "csum_1k") then
+    if(debug>=2) then STDERR.puts("WARNING: File checksums in use are unreliable: #{csumList[0]}") end
+    csumsGood = false;
+  elsif (["csum_name", "csum_nil"].member?(csumList[0])) then
+    if(debug>=2) then STDERR.puts("WARNING: File checksums are missing") end
+    csumsGood = false;
+  end
 end
-if (pColTitles) then
-  pCols.each { |ct| printf("%#{pColsFmt[ct]}s ", ct) }
-  printf("\n")
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------
+if (debug>=5) then
+  mkeys = Set.new
+  csumToRep.each do |fileIdx| 
+    mkeys.merge(fileInfo['META'][fileIdx].keys())
+  end
+  mkeys.each do |mkey|
+    csumToRep.each do |fileIdx|
+      STDERR.puts("SCAN META: #{(fileIdx == 0 ? '<' : '>')} #{mkey} ::: #{fileInfo['META'][fileIdx][mkey]}")
+    end
+  end
+end
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------
+if(debug>=4) then STDERR.puts("STATUS: Printing report") end
+if(debug>=3) then STDERR.puts("INFO: < File: #{csumFiles[0].inspect}") end
+if(debug>=3) then STDERR.puts("INFO: > File: #{csumFiles[1].inspect}") end
+if (pPrefix && doPrefix) then
+  if(debug>=3) then STDERR.puts("INFO: < Prefix: #{fileInfo['PFIX'][0].inspect}") end
+  if(debug>=3) then STDERR.puts("INFO: > Prefix: #{fileInfo['PFIX'][1].inspect}") end
 end
 fnameSeenInBigList = Hash.new
 fnameSeenInDupList = Hash.new
+reportLineNumber   = 0
 csumToRep.each do |i|
   j = (i-1).abs # Index of the other file (0=>1, 1=>0)
   fileInfo['N2H'][i].keys.sort.each do |fnamei|
@@ -266,15 +378,19 @@ csumToRep.each do |i|
       inFile  = [0, 1].map { |k| fileInfo['N2H'][k].member?(fnames[k]) }             # What sides is file name on
       curHash = fileInfo['N2H'][i][fnames[i]]                                        # Hash of current file
       numFnd  = [0, 1].map { |k| (fileInfo['H2N'][k][curHash] || Array.new).length } # Number of times has appears on each side
-      theCols['NL'] = sprintf('%03d', numFnd[0])
-      theCols['NR'] = sprintf('%03d', numFnd[1])
+      theCols['NL'] = (csumsGood ? sprintf('%03d', numFnd[0]) : "???")
+      theCols['NR'] = (csumsGood ? sprintf('%03d', numFnd[1]) : "???")
 
       theCols['H']  = ''
       if(inFile[0] && inFile[1]) then
-        if(curHash == fileInfo['N2H'][j][fnames[j]]) then
-          theCols['H'] = '='
+        if (csumsGood) then
+          if(curHash == fileInfo['N2H'][j][fnames[j]]) then
+            theCols['H'] = '='
+          else
+            theCols['H'] = '|'
+          end
         else
-          theCols['H'] = '|'
+          theCols['H'] = '?'
         end
       else
         if(inFile[0]) then
@@ -286,32 +402,53 @@ csumToRep.each do |i|
 
       theCols['CT'] = deltaUnits(fileInfo['N2CT'][0][fnames[0]], fileInfo['N2CT'][1][fnames[1]], 'time')
       theCols['MT'] = deltaUnits(fileInfo['N2MT'][0][fnames[0]], fileInfo['N2MT'][1][fnames[1]], 'time')
-      theCols['SZ']  = deltaUnits(fileInfo['N2SZ'][0][fnames[0]], fileInfo['N2SZ'][1][fnames[1]], 'size')
+      theCols['SZ'] = deltaUnits(fileInfo['N2SZ'][0][fnames[0]], fileInfo['N2SZ'][1][fnames[1]], 'size')
 
-      theCols['HASH'] = fileInfo['N2H'][i][fnames[i]]
-      theCols['NAME'] = shortName
+      theCols['HASH'] = (csumsGood ? fileInfo['N2H'][i][fnames[i]] : "????")
+      theCols['NAME'] = ( encodeFN ? shortName.dump.gsub(' ', "\\\\x20") : shortName)
 
       # Evaluate search criteria
-      printThisOne = false
+      printThisOneStack = Array.new
       if (searchCriteria.nil?) then
-        printThisOne = true
+        printThisOneStack.push(true)
       else
         searchCriteria.each do |tag, pat|
-          if (printThisOne) then
-            break
-          end
           if (pat.class == Regexp) then
-            if (theCols[tag].match(pat)) then
-              printThisOne = true
+            printThisOneStack.push( !(!(theCols[tag].match(pat))))
+          elsif (pat.class == Symbol) then
+            if (printThisOneStack.length < 2) then
+              if(debug>=1) then STDERR.puts("ERROR: Invalid search operator (#(#{pat}).  Stack too small!") end
+              exit
             end
+            opRHS = printThisOneStack.pop();
+            opLHS = printThisOneStack.pop();
+            if (pat == :sop_and) then
+              printThisOneStack.push(opLHS && opRHS)
+            else
+              printThisOneStack.push(opLHS || opRHS)
+            end
+          elsif (pat[1].class == Integer) then
+            printThisOneStack.push(((pat[0] == '!') && (theCols[tag].to_i != pat[1])) ||
+                                   ((pat[0] == '=') && (theCols[tag].to_i == pat[1])) ||
+                                   ((pat[0] == '<') && (theCols[tag].to_i <  pat[1])) ||
+                                   ((pat[0] == '>') && (theCols[tag].to_i >  pat[1])))
           else
             tmp = (theCols[tag].slice(0, pat[1].length) == pat[1])
-            printThisOne = ( pat[0] ? !tmp : tmp )
+            printThisOneStack.push( ( pat[0] ? !tmp : tmp ) );
+          end
+          if ( (!(haveSearchExpr)) && printThisOneStack.last()) then
+            break
           end
         end
       end
 
-      if (printThisOne) then
+      if (printThisOneStack.last()) then
+        reportLineNumber+=1
+        if( (reportLineNumber == 1) && (pColTitles)) then
+          pColsFmt['HASH'] = - (csumsGood ? curHash.length : 4)
+          pCols.each { |ct| printf("%#{pColsFmt[ct]}s ", ct) }
+          printf("\n")
+        end
         pCols.each { |ct| printf("%#{pColsFmt[ct]}s ", theCols[ct]) }
         printf("\n")
         if(pDups) then
