@@ -51,7 +51,7 @@ searchArgD  = [[ 'H'  , '!=' ],
                [ 'SZ' , '!=' ]]
 csumToRep   = [ 0, 1 ]
 csumFiles   = Array.new
-pCols       = Array.new(allCols)
+pCols       = Array.new()
 encodeFN    = false
 pPrefix     = true
 pDups       = false
@@ -69,7 +69,7 @@ pColsFmt    = { 'NL'   => "-3",
 opts = OptionParser.new do |opts|
   opts.banner = "Usage: cmpCSUM.rb [options] [file1 [file2]]"
   opts.separator ""
-  opts.separator "Options:"
+  opts.separator "General Options:"
   opts.on("-h",        "--help",             "Show this message")                 { puts opts; exit;                           }
   opts.on("-v",        "--debug INT",        "Set debug level")                   { |v| debug=v.to_i;                          }
   opts.separator "                                       0 .. Print report                                                     "
@@ -83,14 +83,17 @@ opts = OptionParser.new do |opts|
   opts.separator "                                       If no files are provided, then the last two .dircsum DBs are used.    "
   opts.separator "                                       If a single file is provided, then the last .dircsum DB is used as    "
   opts.separator "                                         the left file while the named file is used as the right one.        "
+  opts.on(             "--doPrefix Y/N",     "Compute filename prefix")           { |v| doPrefix=(v.match(/^(Y|y|T|t)/));      }
+  opts.separator "Report Tweek Options:"
   opts.on(             "--encodeFN Y/N",     "Encode filenames")                  { |v| encodeFN=(v.match(/^(Y|y|T|t)/));      }
   opts.separator "                                       Printed filenames are transformed via .dump, and spaces are           "
   opts.separator "                                       replaced with \\x20.                                                  "
-  opts.on(             "--doPrefix Y/N",     "Compute filename prefix")           { |v| doPrefix=(v.match(/^(Y|y|T|t)/));      }
   opts.on(             "--pDups Y/N",        "Print files with same content")     { |v| pDups=(v.match(/^(Y|y|T|t)/));         }
+  opts.separator "                                       Requies valid & consistant checksums. Incompatable with --pCols       "
   opts.on(             "--pPrefix Y/N",      "Print found prefixes (if -p)")      { |v| pPrefix=(v.match(/^(Y|y|T|t)/));       }
   opts.on(             "--pCols COLS",       "Cols to print (comma separated)")   { |v| pCols = v.split(/\s*,\s*/);            }
   opts.on(             "--pColTitles Y/N",   "Print col titles")                  { |v| pColTitles=(v.match(/^(Y|y|T|t)/));    }
+  opts.separator "Search Options:"
   opts.on(             "--sNL INT_COMPARE",  "Search criteria for NL column")     { |v| searchArg.push(['NL',   v]);           }
   opts.on(             "--sNR INT_COMPARE",  "Search criteria for NR column")     { |v| searchArg.push(['NR',   v]);           }
   opts.separator "                                       The INT_COMPARE used for --sNL & --sNR is an integer string           "
@@ -111,10 +114,13 @@ opts = OptionParser.new do |opts|
   opts.separator "                                       Select lines for which the REGEX matches the NAME column.             "
   opts.on(             "--soAND",  "Boolean search operator")                     { searchArg.push(['SOP', :sop_and]);         }
   opts.on(             "--soOR",   "Boolean search operator")                     { searchArg.push(['SOP', :sop_or]);          }
+  opts.on(             "--soNOT",  "Boolean search operator")                     { searchArg.push(['SOP', :sop_not]);         }
   opts.separator "                                       The --soAND & --soOR arguments change the way search criteria are     "
   opts.separator "                                       used.  Without them all search criteria are ORed together. With       "
   opts.separator "                                       them the search criteria and operators are evaluated as an RPN        "
   opts.separator "                                       expression with a FORTH-like stack.                                   "
+  opts.separator "                  If no command line search options are present, then lines with changes will be selected    "
+  opts.separator "                  as if the following options had been used: --sH '!=' --sSZ '!=' --sCT '!=' --sMT '!='      "
   opts.separator "                                                                                                             "
   opts.separator "Output:                                                                                                      "
   opts.separator "  The output generated on STDOUT is designed to be easily consumable by traditional UNIX tools like grep     "
@@ -157,6 +163,13 @@ opts = OptionParser.new do |opts|
   opts.separator "                 SHA256 .......... 64 characters                                                             "
   opts.separator "                 MD5 ............. 32 characters                                                             "
   opts.separator "    - NAME .. File Name                                                                                      "
+  opts.separator "  When --pDups is turned on, the report is augmented by printing duplicate files on lines immediately        "
+  opts.separator "  following each normal report line.  These duplicate file names are aligned with the rest of the file       "
+  opts.separator "  names in the report.  Each duplicate is preceded by a character identifying where the file name was        "
+  opts.separator "  found (< in the left checksum file, > in the right checksum file, or = if it was in both).  Note ALL       "
+  opts.separator "  files are listed in this duplicate section -- including the one on the report line before the             "
+  opts.separator "  duplicates.  Also note that duplicate sections are only printed if the current file has not already        "
+  opts.separator "  been included in a previous duplicate file listing.                                                        "
   opts.separator "                                                                                                             "
   opts.separator "Examples:                                                                                                    "
   opts.separator "  - List file names for new files and files with content changes.  Usefull for a dynamci backup scheme.      "
@@ -167,10 +180,23 @@ opts = OptionParser.new do |opts|
   opts.separator "      --sH '!X'                                                                                              "
   opts.separator "  - Show no lines even without changes.  Usefull for debugging.  Works because H can't be 'X'                "
   opts.separator "      --sH 'X'                                                                                               "
+  opts.separator "  - Show all changes, but not if the path contains a .git component.                                         "
+  opts.separator "      --sH '!=' --sSZ '!=' --sCT '!=' --sMT '!=' --soOR --soOR --soOR --sNAME '\\/\\.git\\/' --soNOT --soAND "
   opts.separator "                                                                                                             "
 end
 opts.parse!(ARGV)
 csumFiles=Array.new(2)
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------
+# Populate pCols & check for pDups/pCols conflict
+if (pCols.empty?) then
+  pCols = allCols.clone();
+else
+  if (pDups) then
+    if(debug>=1) then STDERR.puts("ERROR: The --pDups option can not be used with --pCols option!") end
+    exit
+  end
+end
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Populate csumFiles & check that we got the correct number of files
@@ -338,6 +364,11 @@ else
   end
 end
 
+if ( !(csumsGood) && pDups ) then
+  if(debug>=1) then STDERR.puts("ERROR: The --pDups option can not be used with inconsistant checksums!") end
+  exit
+end
+
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 if (debug>=5) then
   mkeys = Set.new
@@ -416,16 +447,22 @@ csumToRep.each do |i|
           if (pat.class == Regexp) then
             printThisOneStack.push( !(!(theCols[tag].match(pat))))
           elsif (pat.class == Symbol) then
-            if (printThisOneStack.length < 2) then
-              if(debug>=1) then STDERR.puts("ERROR: Invalid search operator (#(#{pat}).  Stack too small!") end
+            numArgs = ( pat == :sop_not ? 1 : 2)
+            if (printThisOneStack.length < numArgs) then
+              if(debug>=1) then STDERR.puts("ERROR: Search operator (#(#{pat}) requires at least #{numArgs} arguments!") end
               exit
             end
-            opRHS = printThisOneStack.pop();
-            opLHS = printThisOneStack.pop();
-            if (pat == :sop_and) then
-              printThisOneStack.push(opLHS && opRHS)
+            if (numArgs == 1) then
+              opARG = printThisOneStack.pop();
+              printThisOneStack.push(!(opARG)) # Only have one op that takes one arg
             else
-              printThisOneStack.push(opLHS || opRHS)
+              opRHS = printThisOneStack.pop();
+              opLHS = printThisOneStack.pop();
+              if (pat == :sop_and) then
+                printThisOneStack.push(opLHS && opRHS)
+              else
+                printThisOneStack.push(opLHS || opRHS)
+              end
             end
           elsif (pat[1].class == Integer) then
             printThisOneStack.push(((pat[0] == '!') && (theCols[tag].to_i != pat[1])) ||
@@ -444,8 +481,8 @@ csumToRep.each do |i|
 
       if (printThisOneStack.last()) then
         reportLineNumber+=1
+        pColsFmt['HASH'] = - (csumsGood ? curHash.length : 4)
         if( (reportLineNumber == 1) && (pColTitles)) then
-          pColsFmt['HASH'] = - (csumsGood ? curHash.length : 4)
           pCols.each { |ct| printf("%#{pColsFmt[ct]}s ", ct) }
           printf("\n")
         end
@@ -472,7 +509,7 @@ csumToRep.each do |i|
           if (sameContentFileList.keys.length > 1) then
             sameContentFileList.each do |dshortName, locs|
               if ( !(fnameSeenInDupList.member?(dshortName))) then
-                printf("%s %s %s\n", ' '*53, locs, dshortName)
+                printf("%s %s %s\n", ' '*(curHash.length+17), locs, dshortName)
                 fnameSeenInDupList[dshortName] = 1
               end
             end

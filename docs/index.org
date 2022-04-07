@@ -66,10 +66,10 @@ Probably the most common application people write to me about is file server usa
  - How much space can we save if we move stuff not modified in 6 months to cold storage?
  - How much data is owned by people no longer employed at my company?
 
-The main data collection script is =csumNew.rb=.  It scans a directory hierarchy and stores file-system metadata in an SQLite database.  For many end users
-this DB and the data it provides is the ultimate end goal for using this code.  Probably the most popular use is to do things like audit file types stored on
-file servers.  For me the more useful application is found in the =cmpCSUMdb.rg= and =cmpCSUM.rg= scripts.  These compare two metadata databases.  When
-combined with the "=.dircsum=" mode of =csumNew.rb= this provides a powerful way to track file-system changes over time.
+The main data collection script is [[#script-csumNew][=csumNew.rb=]].  It scans a directory hierarchy and stores file-system metadata in an SQLite database.
+For many end users this DB and the data it provides is the ultimate end goal for using this code.  Probably the most popular use is to do things like audit
+file types stored on file servers.  For me the more useful application is found in the [[#script-cmpCSUMdb][=cmpCSUMdb.rb=]] and
+[[#script-cmpCSUM][=cmpCSUM.rb=]] scripts.  These compare two metadata databases.  
 
 * The scripts
 :PROPERTIES:
@@ -177,7 +177,8 @@ containing various file meta data.
 :CUSTOM_ID: script-cmpCSUMdb
 :END:
 
-Compare two checksum DBs.  Works only with new (sqlite) DB formats.  Uses a DB query to do the report.
+Compare two checksum DBs.  This script uses a DB query to do the report, and thus the script provides a useful
+example illustrating how to work with the DB schema.
 
 #+begin_src sh :results output verbatim :exports both :wrap "src text :eval never"
 seq -s= 120 | tr -d '0-9'
@@ -212,24 +213,25 @@ Read two scan databases, and produce a file difference report.
 :CUSTOM_ID: script-cmpCSUM
 :END:
 
-Compare two checksum DBs.  Works with both old (text) and new (sqlite) DB formats.
+Compare two checksum DBs.  This script takes a more "hands on" approach.  It pulls all the data from the DBs into internal data structures, and then produces
+a more sophisticated report.
 
 #+begin_src sh :results output verbatim :exports both :wrap "src text :eval never"
 seq -s= 120 | tr -d '0-9'
 echo Help as of `date`
 seq -s= 120 | tr -d '0-9'
-./cmpCSUM.rb --help
+../cmpCSUM.rb --help
 seq -s= 120 | tr -d '0-9'
 #+end_src
 
 #+RESULTS:
 #+begin_src text :eval never
 =======================================================================================================================
-Help as of Tue Apr 5 18:56:12 PDT 2022
+Help as of Wed Apr 6 17:16:33 PDT 2022
 =======================================================================================================================
 Usage: cmpCSUM.rb [options] [file1 [file2]]
 
-Options:
+General Options:
     -h, --help                       Show this message
     -v, --debug INT                  Set debug level
                                        0 .. Print report                                                     
@@ -243,14 +245,17 @@ Options:
                                        If no files are provided, then the last two .dircsum DBs are used.    
                                        If a single file is provided, then the last .dircsum DB is used as    
                                          the left file while the named file is used as the right one.        
+        --doPrefix Y/N               Compute filename prefix
+Report Tweek Options:
         --encodeFN Y/N               Encode filenames
                                        Printed filenames are transformed via .dump, and spaces are           
                                        replaced with \x20.                                                  
-        --doPrefix Y/N               Compute filename prefix
         --pDups Y/N                  Print files with same content
+                                       Requies valid & consistant checksums. Incompatable with --pCols       
         --pPrefix Y/N                Print found prefixes (if -p)
         --pCols COLS                 Cols to print (comma separated)
         --pColTitles Y/N             Print col titles
+Search Options:
         --sNL INT_COMPARE            Search criteria for NL column
         --sNR INT_COMPARE            Search criteria for NR column
                                        The INT_COMPARE used for --sNL & --sNR is an integer string           
@@ -271,10 +276,13 @@ Options:
                                        Select lines for which the REGEX matches the NAME column.             
         --soAND                      Boolean search operator
         --soOR                       Boolean search operator
+        --soNOT                      Boolean search operator
                                        The --soAND & --soOR arguments change the way search criteria are     
                                        used.  Without them all search criteria are ORed together. With       
                                        them the search criteria and operators are evaluated as an RPN        
                                        expression with a FORTH-like stack.                                   
+                  If no command line search options are present, then lines with changes will be selected    
+                  as if the following options had been used: --sH '!=' --sSZ '!=' --sCT '!=' --sMT '!='      
                                                                                                              
 Output:                                                                                                      
   The output generated on STDOUT is designed to be easily consumable by traditional UNIX tools like grep     
@@ -317,6 +325,13 @@ Output:
                  SHA256 .......... 64 characters                                                             
                  MD5 ............. 32 characters                                                             
     - NAME .. File Name                                                                                      
+  When --pDups is turned on, the report is augmented by printing duplicate files on lines immediately        
+  following each normal report line.  These duplicate file names are aligned with the rest of the file       
+  names in the report.  Each duplicate is preceded by a character identifying where the file name was        
+  found (< in the left checksum file, > in the right checksum file, or = if it was in both).  Note ALL       
+  files are listed in this duplicate section -- including the one on the report line before the             
+  duplicates.  Also note that duplicate sections are only printed if the current file has not already        
+  been included in a previous duplicate file listing.                                                        
                                                                                                              
 Examples:                                                                                                    
   - List file names for new files and files with content changes.  Usefull for a dynamci backup scheme.      
@@ -327,6 +342,8 @@ Examples:
       --sH '!X'                                                                                              
   - Show no lines even without changes.  Usefull for debugging.  Works because H can't be 'X'                
       --sH 'X'                                                                                               
+  - Show all changes, but not if the path contains a .git component.                                         
+      --sH '!=' --sSZ '!=' --sCT '!=' --sMT '!=' --soOR --soOR --soOR --sNAME '\/\.git\/' --soNOT --soAND 
                                                                                                              
 =======================================================================================================================
 #+end_src
