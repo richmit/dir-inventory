@@ -2,7 +2,7 @@
 # -*- Mode:Ruby; Coding:us-ascii-unix; fill-column:158 -*-
 ################################################################################################################################################################
 ##
-# @file      csumNew.rb
+# @file      dcsumNew.rb
 # @author    Mitch Richling <https://www.mitchr.me>
 # @brief     Create an inventory for a filesystem directory tree.@EOL
 # @keywords  checksum filesystem directory sub-directory tree inventory sqlite database
@@ -284,6 +284,12 @@ SQL
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Process command line arguments
+csumSym = { 'SHA1'  => :csum_sha1,
+                'SHA25' => :csum_sha256,
+                'MD5'   => :csum_md5,
+                'NIL'   => :csum_nil,
+                '1K'    => :csum_1k,
+                'NAME'  => :csum_name }
 doMitchExtXfrm = true
 timeStart      = Time.now
 outDBfile      = Time.now.strftime('%Y%m%d%H%M%S_dircsum.sqlite')
@@ -304,11 +310,11 @@ opts = OptionParser.new do |opts|
   opts.separator "Scan the directory tree rooted at <directory-to-traverse>, and create an SQLite3 database             "
   opts.separator "containing various file meta data.                                                                    "
   opts.separator "                                                                                                      "
-  opts.separator "  Help & Information Options:"
-  opts.on("-h",           "--help",           "Show this message")                    { puts opts; exit                                      }
-  opts.on(                "--schema",         "Print DB schema")                      { dumpSchema = true;                                   }
-  opts.separator "  Output Options:"
-  opts.on("-p LEVEL",     "--progress LEVEL", "Verbosity bitmask")                    { |v| $printProgress=v.to_i;                           }
+  opts.separator "  Help & Information Options:                                                                         "
+  opts.on("-h",           "--help",           "Show this message")         { puts opts; exit                            }
+  opts.on(                "--schema",         "Print DB schema")           { dumpSchema = true;                         }
+  opts.separator "  Output Options:                                                                                     "
+  opts.on("-p LEVEL",     "--progress LEVEL", "Verbosity bitmask")         { |v| $printProgress=v.to_i;                 }
   opts.separator "                            +-----+--------------------------------------------+---------------+      "
   opts.separator "                            | bit | Description                                | Incompatible  |      "
   opts.separator "                            +-----+--------------------------------------------+---------------+      "
@@ -334,39 +340,31 @@ opts = OptionParser.new do |opts|
   opts.separator "                                          | 0x02 | New file                |                          "
   opts.separator "                                          | 0x01 | New scan -- no old data |                          "
   opts.separator "                                          +------+-------------------------+                          "
-  opts.on("-o OUT-DB",    "--output OUT-DB",  "File name for output database")        { |v| outDBfile=v;                                     }
+  opts.on("-o OUT-DB",    "--output OUT-DB",  "output database File name") { |v| outDBfile=v;                           }
   opts.separator "                                       If -o is missing, then a name is constructed using the         "
   opts.separator "                                       date and the strftime template '%Y%m%d%H%M%S_dircsum.sqlite'.  "
   opts.separator "  Update Mode Options:"
-  opts.on("-u OLD-DB",    "--update OLD-DB",  "File name old database")               { |v| oldFileFile=v;                                   }
+  opts.on("-u OLD-DB",    "--update OLD-DB",  "File name old database")    { |v| oldFileFile=v;                         }
   opts.separator "                                       Checksums in the input database named OLD-DB are used for      "
   opts.separator "                                       scanned files which appear unchanged.  By default 'unchanged'  "
   opts.separator "                                       means identical relative path names, sizes, and time stamps.   "
   opts.separator "                                       Size, ctime, & mtime may be ignored via -s, -c, & -m options.  "
-  opts.on("-c Y/N",       "--ctime Y/N",      "Check ctime for -u option")            { |v| oldFileCtime=v.match(/^[YyTt]/);                 }
-  opts.on("-m Y/N",       "--mtime Y/N",      "Check mtime for -u option")            { |v| oldFileMtime=v.match(/^[YyTt]/);                 }
-  opts.on("-s Y/N",       "--size Y/N",       "Check size for -u option")             { |v| oldFileSize=v.match(/^[YyTt]/);                  }
-  opts.on("-U",           "--dircsum",        "Set dircsum mode")                     { dircsumMode = true;                                  }
+  opts.on("-c Y/N",       "--ctime Y/N",      "Check ctime for -u option") { |v| oldFileCtime=v.match(/^[YyTt]/);       }
+  opts.on("-m Y/N",       "--mtime Y/N",      "Check mtime for -u option") { |v| oldFileMtime=v.match(/^[YyTt]/);       }
+  opts.on("-s Y/N",       "--size Y/N",       "Check size for -u option")  { |v| oldFileSize=v.match(/^[YyTt]/);        }
+  opts.on("-U",           "--dircsum",        "Set dircsum mode")          { dircsumMode = true;                        }
   opts.separator "                                       The idea is that one can keep a '.dircsum' directory           "
   opts.separator "                                       at the root of some directory tree, and keep a historical      "
   opts.separator "                                       sequence of checksum databases for the directory tree.         "
   opts.separator "                                       DB names are as described when the the -o option is missing.   "
-  opts.separator "                                         - Sets -u to the latest file in the .dircsum/ sub-directory   "
-  opts.separator "                                         - Sets -o to a new file in .dircsum/ sub-directory            "
-  opts.separator "                                           May be overridden with an explicitly provided -o option     "
+  opts.separator "                                         - Sets -u to the latest file in the .dircsum/ sub-directory  "
+  opts.separator "                                         - Sets -o to a new file in .dircsum/ sub-directory           "
+  opts.separator "                                           May be overridden with an explicitly provided -o option    "
   opts.separator "                                         - Sets the directory to be scanned to the PWD.               "
   opts.separator "  Behavioral/Tuning Options:"
-  opts.on("-k CSUM",      "--csum CSUM",      "Checksum to use instead of SHA256")    { |v| [[Regexp.new('sha1',  Regexp::IGNORECASE), :csum_sha1  ],
-                                                                                             [Regexp.new('sha25', Regexp::IGNORECASE), :csum_sha256],
-                                                                                             [Regexp.new('md5',   Regexp::IGNORECASE), :csum_md5   ],
-                                                                                             [Regexp.new('nil',   Regexp::IGNORECASE), :csum_nil   ],
-                                                                                             [Regexp.new('1k',    Regexp::IGNORECASE), :csum_1k    ],
-                                                                                             [Regexp.new('name',  Regexp::IGNORECASE), :csum_name  ]].each do |r, w|
-                                                                                          if(v.match(r)) then
-                                                                                            csumToUse = w;
-                                                                                          end
-                                                                                        end
-                                                                                      }
+  opts.on("-k CSUM",      "--csum CSUM",      "Checksum to use")           { |v| if (csumSym.member?(v.upcase)) then
+                                                                                   csumToUse = csumSym.member?(v.upcase)
+                                                                                 end                                    }
   opts.separator "                                       * sha256 .. SHA256 (default)                                   "
   opts.separator "                                       * sha1 .... SHA1                                               "
   opts.separator "                                       * md5 ..... MD5                                                "
@@ -374,14 +372,17 @@ opts = OptionParser.new do |opts|
   opts.separator "                                       * name .... File Name                                          "
   opts.separator "                                       * nil ..... No Checksum                                        "
   opts.separator "  DB Schema Options:"
-  opts.on(                "--BLKnFSOBJ    Y/N",  "Put blocks & blocksz in fsobj")                               { |v| schemaOpt['BLKnFSOBJ']   = v.match(/^[YyTt]/);  }
-  opts.separator "                                        Default: #{schemaOpt['BLKnFSOBJ']}                             "
-  opts.on(                "--DEVnFSOBJ    Y/N",  "Put device in fsobj")                                         { |v| schemaOpt['DEVnFSOBJ']   = v.match(/^[YyTt]/);  }
-  opts.separator "                                        Default: #{schemaOpt['DEVnFSOBJ']}                             "
-  opts.on(                "--EXTnFSOBJ    Y/N",  "Put file extension in fsobj.")                                { |v| schemaOpt['EXTnFSOBJ']   = v.match(/^[YyTt]/);  }
-  opts.separator "                                        Default: #{schemaOpt['EXTnFSOBJ']}                           "
-  opts.separator "                                                                                                       "
-  opts.separator "                                                                                                       "
+  opts.on(                "--BLKnFSOBJ    Y/N",  "Store blocks & blocksz") { |v| schemaOpt['BLKnFSOBJ'] = 
+                                                                             v.match(/^[YyTt]/);                        }
+  opts.separator "                                        Default: #       {schemaOpt['BLKnFSOBJ']}                     "
+  opts.on(                "--DEVnFSOBJ    Y/N",  "Store device ID")        { |v| schemaOpt['DEVnFSOBJ'] = 
+                                                                             v.match(/^[YyTt]/);                        }
+  opts.separator "                                        Default: #       {schemaOpt['DEVnFSOBJ']}                     "
+  opts.on(                "--EXTnFSOBJ    Y/N",  "Store file extension")   { |v| schemaOpt['EXTnFSOBJ'] = 
+                                                                             v.match(/^[YyTt]/);                        }
+  opts.separator "                                        Default: #       {schemaOpt['EXTnFSOBJ']}                     "
+  opts.separator "                                                                                                      "
+  opts.separator "                                                                                                      "
 end
 opts.parse!(ARGV)
 dirToScan = nil

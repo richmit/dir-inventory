@@ -36,13 +36,13 @@ server usage pattern analysis.  Questions like:
    in 6 months to cold storage?
  - How much data is owned by people no longer employed at my company?
 
-The main data collection script is =csumNew.rb=.  It scans a directory
+The main data collection script is =dcsumNew.rb=.  It scans a directory
 hierarchy and stores file-system metadata in an SQLite database.  For
 many end users this DB and the data it provides is the ultimate end
 goal for using this code.  For me the more useful application is found
-in the =cmpCSUMdb.rb= and =cmpCSUM.rb= scripts.  These compare two
+in the =dcsumCmpDB.rb= and =cmpCSUM.rb= scripts.  These compare two
 metadata databases.  When combined with the "=.dircsum=" mode of
-=csumNew.rb= this provides a powerful way to track file-system changes
+=dcsumNew.rb= this provides a powerful way to track file-system changes
 over time.
 
 Check out my home page for more stuff: https://www.mitchr.me/

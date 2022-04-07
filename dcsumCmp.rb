@@ -132,7 +132,7 @@ opts = OptionParser.new do |opts|
   opts.separator "              Both NL & NR will be '???' if hashes in the DBs are not usable.                                "
   opts.separator "                NOTE: Usually the reason hashes are not usable is the two files use different hash types.    "
   opts.separator "                      It can also happen that one of the files is simply missing hash values altogether      "
-  opts.separator "                      or that the hashes are unreliable (csumNew used with '-k name' or '-k 1k').            "
+  opts.separator "                      or that the hashes are unreliable (dcsumNew used with '-k name' or '-k 1k').            "
   opts.separator "    - H ..... Checksum (content) difference between current file and file on other side of same name:        "
   opts.separator "              This field is precisely one character:                                                         "
   opts.separator "                - = file name exists on left & right and hashes are the same                                 "

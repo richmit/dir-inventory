@@ -2,7 +2,7 @@
 # -*- Mode:Ruby; Coding:us-ascii-unix; fill-column:158 -*-
 ################################################################################################################################################################
 ##
-# @file      cmpCSUMdb.rb
+# @file      dcsumCmpDB.rb
 # @author    Mitch Richling <https://www.mitchr.me>
 # @brief     Compare two filesystem directory tree inventory databases.@EOL
 # @keywords  checksum filesystem directory sub-directory tree inventory sqlite database

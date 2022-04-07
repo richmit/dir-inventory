@@ -66,9 +66,9 @@ Probably the most common application people write to me about is file server usa
  - How much space can we save if we move stuff not modified in 6 months to cold storage?
  - How much data is owned by people no longer employed at my company?
 
-The main data collection script is [[#script-csumNew][=csumNew.rb=]].  It scans a directory hierarchy and stores file-system metadata in an SQLite database.
+The main data collection script is [[#script-dcsumNew][=dcsumNew.rb=]].  It scans a directory hierarchy and stores file-system metadata in an SQLite database.
 For many end users this DB and the data it provides is the ultimate end goal for using this code.  Probably the most popular use is to do things like audit
-file types stored on file servers.  For me the more useful application is found in the [[#script-cmpCSUMdb][=cmpCSUMdb.rb=]] and
+file types stored on file servers.  For me the more useful application is found in the [[#script-dcsumCmpDB][=dcsumCmpDB.rb=]] and
 [[#script-cmpCSUM][=cmpCSUM.rb=]] scripts.  These compare two metadata databases.  
 
 * The scripts
@@ -76,9 +76,9 @@ file types stored on file servers.  For me the more useful application is found 
 :CUSTOM_ID: scripts
 :END:
 
-** =csumNew.rb=
+** =dcsumNew.rb=
 :PROPERTIES:
-:CUSTOM_ID: script-csumNew
+:CUSTOM_ID: script-dcsumNew
 :END:
 
 Create a new checksum DB
@@ -87,7 +87,7 @@ Create a new checksum DB
 seq -s= 120 | tr -d '0-9'
 echo Help as of `date`
 seq -s= 120 | tr -d '0-9'
-./csumNew.rb --help
+./dcsumNew.rb --help
 seq -s= 120 | tr -d '0-9'
 #+end_src
 
@@ -172,9 +172,9 @@ containing various file meta data.
 =======================================================================================================================
 #+end_src
 
-** =cmpCSUMdb.rb=
+** =dcsumCmpDB.rb=
 :PROPERTIES:
-:CUSTOM_ID: script-cmpCSUMdb
+:CUSTOM_ID: script-dcsumCmpDB
 :END:
 
 Compare two checksum DBs.  This script uses a DB query to do the report, and thus the script provides a useful
@@ -184,7 +184,7 @@ example illustrating how to work with the DB schema.
 seq -s= 120 | tr -d '0-9'
 echo Help as of `date`
 seq -s= 120 | tr -d '0-9'
-./cmpCSUMdb.rb --help
+./dcsumCmpDB.rb --help
 seq -s= 120 | tr -d '0-9'
 #+end_src
 
@@ -294,7 +294,7 @@ Output:
               Both NL & NR will be '???' if hashes in the DBs are not usable.                                
                 NOTE: Usually the reason hashes are not usable is the two files use different hash types.    
                       It can also happen that one of the files is simply missing hash values altogether      
-                      or that the hashes are unreliable (csumNew used with '-k name' or '-k 1k').            
+                      or that the hashes are unreliable (dcsumNew used with '-k name' or '-k 1k').            
     - H ..... Checksum (content) difference between current file and file on other side of same name:        
               This field is precisely one character:                                                         
                 - = file name exists on left & right and hashes are the same                                 
@@ -492,14 +492,14 @@ derive the remaining values.  Also note that we can't get away with less than st
 :CUSTOM_ID: db-schema
 :END:
 
-All of this theory leads us to a concrete SQL implementation of the ideas.  The schema below is dumped directly from the =csumNew.rb= script given the
+All of this theory leads us to a concrete SQL implementation of the ideas.  The schema below is dumped directly from the =dcsumNew.rb= script given the
 =--schema= option.
 
 #+begin_src sh :results output verbatim :exports both :wrap "src sql :eval never"
 echo ' -- '$(seq -s= 120 | tr -d '0-9')
 echo ' -- Schema as of '$(date)
 echo ' -- '$(seq -s= 120 | tr -d '0-9')
-./csumNew.rb --schema --BLKnFSOBJ Y --DEVnFSOBJ Y
+./dcsumNew.rb --schema --BLKnFSOBJ Y --DEVnFSOBJ Y
 echo ' -- '$(seq -s= 120 | tr -d '0-9')
 #+end_src
 
@@ -1570,7 +1570,7 @@ SELECT d1.annofsobj.relpn, d1.annofsobj.mtime, d2.annofsobj.mtime, d1.annofsobj.
 Note that this can be quite slow on large scans.  A better technique is to materialize =d1.annofsobj= & =d2.annofsobj= first in an in-RAM DB, and then do the
 difference report query.
 
-See: =cmpCSUMdb.rb=
+See: =dcsumCmpDB.rb=
     
 #+begin_src  sqlite :db dummy.sqlite :colnames yes
 attach database "test1.sqlite" as d1;
@@ -2121,7 +2121,7 @@ echo '1' >  r/x/o/v
 seq -s= 120 | tr -d '0-9'
 rm test1.sqlite
 seq -s= 120 | tr -d '0-9'
-./csumNew.rb -o test1.sqlite -p 3 r
+./dcsumNew.rb -o test1.sqlite -p 3 r
 seq -s= 120 | tr -d '0-9'
 sqlite3 -header test1.sqlite "select * from fsobj;" | column -t -s \|                                                                                                                                                                                                                                     
 seq -s= 120 | tr -d '0-9'
@@ -2173,7 +2173,7 @@ echo '2' >  r/x/o/v
 seq -s= 120 | tr -d '0-9'
 rm test2.sqlite
 seq -s= 120 | tr -d '0-9'
-./csumNew.rb -o test2.sqlite -p 3 r
+./dcsumNew.rb -o test2.sqlite -p 3 r
 seq -s= 120 | tr -d '0-9'
 sqlite3 -header test2.sqlite "select * from fsobj;" | column -t -s \|                                                                                                                                                                                                                                     
 seq -s= 120 | tr -d '0-9'
