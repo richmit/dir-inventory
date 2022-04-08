@@ -47,18 +47,31 @@ outputFmt   = :of_human
 debug       = 3
 dircsumMode = false
 opts = OptionParser.new do |opts|
-  opts.banner = "Usage: dcsumMeta.rb [options] [file ...]                                    "
-  opts.separator "                                                                          "
-  opts.separator "Reports various metadata for provided checksum file(s)                    "
-  opts.separator "                                                                          "
-  opts.separator "Options:                                                                  "
-  opts.on("-h",        "--help",             "Show this message") { puts opts; exit;        }
-  opts.on("-U",        "--dircsum",          "Set dircsum mode")  { dircsumMode = true;     }
-  opts.separator "                                       Uses the most recient .dircsum DB. "
-  opts.separator "                                                                          "
+  opts.banner = "Usage: dcsumMeta.rb [options] [file ...]                                                               "
+  opts.separator "                                                                                                      "
+  opts.separator "Reports various metadata for provided checksum file(s)                                                "
+  opts.separator "                                                                                                      "
+  opts.separator "Options:                                                                                              "
+  opts.on("-h",        "--help",             "Show this message") { puts opts; exit;                                    }
+  opts.on("-U",        "--dircsum",          "Set dircsum mode")  { dircsumMode = true;                                 }
+  opts.separator "                                       Uses the most recient .dircsum DB.                             "
+  opts.separator "                                       If no directory-to-traverse is provided on the command line    "
+  opts.separator "                                       and the .dircsum directory exists, then -U is assumed          "
+  opts.separator "                                                                                                      "
 end
 opts.parse!(ARGV)
 files = ARGV.clone
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------
+if ( !(dircsumMode) && files.empty? ) then
+  if (FileTest.exist?('.dircsum')) then
+    dircsumMode = true;
+    #puts("WARNING: No directory provided, but .dircsum found -- running in -U mode")
+  else
+    puts("ERROR: No directory provided, and .dircsum missing.  Run with -U to force dircsum mode!")
+    exit
+  end
+end
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 if(dircsumMode) then

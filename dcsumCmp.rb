@@ -83,6 +83,8 @@ opts = OptionParser.new do |opts|
   opts.separator "                                       If no files are provided, then the last two .dircsum DBs are used.    "
   opts.separator "                                       If a single file is provided, then the last .dircsum DB is used as    "
   opts.separator "                                         the left file while the named file is used as the right one.        "
+  opts.separator "                                       If no directory-to-traverse is provided on the command line           "
+  opts.separator "                                       and the .dircsum directory exists, then -U is assumed                 "
   opts.on(             "--doPrefix Y/N",     "Compute filename prefix")           { |v| doPrefix=(v.match(/^(Y|y|T|t)/));      }
   opts.separator "Report Tweek Options:"
   opts.on(             "--encodeFN Y/N",     "Encode filenames")                  { |v| encodeFN=(v.match(/^(Y|y|T|t)/));      }
@@ -194,6 +196,17 @@ if (pCols.empty?) then
 else
   if (pDups) then
     if(debug>=1) then STDERR.puts("ERROR: The --pDups option can not be used with --pCols option!") end
+    exit
+  end
+end
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------
+if ( !(dircsumMode) && ARGV.empty? ) then
+  if (FileTest.exist?('.dircsum')) then
+    dircsumMode = true;
+    #puts("WARNING: No directory provided, but .dircsum found -- running in -U mode")
+  else
+    puts("ERROR: No directory provided, and .dircsum missing.  Run with -U to force dircsum mode!")
     exit
   end
 end
