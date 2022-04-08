@@ -69,7 +69,7 @@ Probably the most common application people write to me about is file server usa
 The main data collection script is [[#script-dcsumNew][=dcsumNew.rb=]].  It scans a directory hierarchy and stores file-system metadata in an SQLite database.
 For many end users this DB and the data it provides is the ultimate end goal for using this code.  Probably the most popular use is to do things like audit
 file types stored on file servers.  For me the more useful application is found in the [[#script-dcsumCmpDB][=dcsumCmpDB.rb=]] and
-[[#script-cmpCSUM][=cmpCSUM.rb=]] scripts.  These compare two metadata databases.  
+[[#script-dcsumCmp][=dcsumCmp.rb=]] scripts.  These compare two metadata databases.  
 
 * The scripts
 :PROPERTIES:
@@ -87,25 +87,26 @@ Create a new checksum DB
 seq -s= 120 | tr -d '0-9'
 echo Help as of `date`
 seq -s= 120 | tr -d '0-9'
-./dcsumNew.rb --help
+../dcsumNew.rb --help
 seq -s= 120 | tr -d '0-9'
 #+end_src
 
 #+RESULTS:
 #+begin_src text :eval never
 =======================================================================================================================
-Help as of Tue Apr 5 18:56:00 PDT 2022
+Help as of Thu Apr 7 17:39:27 PDT 2022
 =======================================================================================================================
 Usage: dirCSUM.rb [options] <directory-to-traverse>
 
 Scan the directory tree rooted at <directory-to-traverse>, and create an SQLite3 database             
 containing various file meta data.                                                                    
                                                                                                       
-  Help & Information Options:
+  Help & Information Options:                                                                         
     -h, --help                       Show this message
         --schema                     Print DB schema
-  Output Options:
+  Output Options:                                                                                     
     -p, --progress LEVEL             Verbosity bitmask
+                                       Default: 35                                                    
                             +-----+--------------------------------------------+---------------+      
                             | bit | Description                                | Incompatible  |      
                             +-----+--------------------------------------------+---------------+      
@@ -131,7 +132,7 @@ containing various file meta data.
                                           | 0x02 | New file                |                          
                                           | 0x01 | New scan -- no old data |                          
                                           +------+-------------------------+                          
-    -o, --output OUT-DB              File name for output database
+    -o, --output OUT-DB              output database File name
                                        If -o is missing, then a name is constructed using the         
                                        date and the strftime template '%Y%m%d%H%M%S_dircsum.sqlite'.  
   Update Mode Options:
@@ -148,12 +149,14 @@ containing various file meta data.
                                        at the root of some directory tree, and keep a historical      
                                        sequence of checksum databases for the directory tree.         
                                        DB names are as described when the the -o option is missing.   
-                                         - Sets -u to the latest file in the .dircsum/ sub-directory   
-                                         - Sets -o to a new file in .dircsum/ sub-directory            
-                                           May be overridden with an explicitly provided -o option     
+                                         - Sets -u to the latest file in the .dircsum/ sub-directory  
+                                         - Sets -o to a new file in .dircsum/ sub-directory           
+                                           May be overridden with an explicitly provided -o option    
                                          - Sets the directory to be scanned to the PWD.               
-  Behavioral/Tuning Options:
-    -k, --csum CSUM                  Checksum to use instead of SHA256
+                                       If no directory-to-traverse is provided on the command line    
+                                       and the .dircsum directory exists, then -U is assumed          
+  Behavioral/Tuning Options:                                                                          
+    -k, --csum CSUM                  Checksum to use
                                        ,* sha256 .. SHA256 (default)                                   
                                        ,* sha1 .... SHA1                                               
                                        ,* md5 ..... MD5                                                
@@ -161,14 +164,14 @@ containing various file meta data.
                                        ,* name .... File Name                                          
                                        ,* nil ..... No Checksum                                        
   DB Schema Options:
-        --BLKnFSOBJ    Y/N           Put blocks & blocksz in fsobj
-                                        Default: false                             
-        --DEVnFSOBJ    Y/N           Put device in fsobj
-                                        Default: false                             
-        --EXTnFSOBJ    Y/N           Put file extension in fsobj.
-                                        Default: true                           
-                                                                                                       
-                                                                                                       
+        --BLKnFSOBJ    Y/N           Store blocks & blocksz
+                                        Default: #       {schemaOpt['BLKnFSOBJ']}                     
+        --DEVnFSOBJ    Y/N           Store device ID
+                                        Default: #       {schemaOpt['DEVnFSOBJ']}                     
+        --EXTnFSOBJ    Y/N           Store file extension
+                                        Default: #       {schemaOpt['EXTnFSOBJ']}                     
+                                                                                                      
+                                                                                                      
 =======================================================================================================================
 #+end_src
 
@@ -184,14 +187,14 @@ example illustrating how to work with the DB schema.
 seq -s= 120 | tr -d '0-9'
 echo Help as of `date`
 seq -s= 120 | tr -d '0-9'
-./dcsumCmpDB.rb --help
+../dcsumCmpDB.rb --help
 seq -s= 120 | tr -d '0-9'
 #+end_src
 
 #+RESULTS:
 #+begin_src text :eval never
 =======================================================================================================================
-Help as of Tue Apr 5 18:56:09 PDT 2022
+Help as of Thu Apr 7 17:39:36 PDT 2022
 =======================================================================================================================
 Usage: cmpSQL.rb [options] scanDB1 scanDB2                                            
                                                                                      
@@ -208,9 +211,9 @@ Read two scan databases, and produce a file difference report.
 =======================================================================================================================
 #+end_src
 
-** =cmpCSUM.rb=
+** =dcsumCmp.rb=
 :PROPERTIES:
-:CUSTOM_ID: script-cmpCSUM
+:CUSTOM_ID: script-dcsumCmp
 :END:
 
 Compare two checksum DBs.  This script takes a more "hands on" approach.  It pulls all the data from the DBs into internal data structures, and then produces
@@ -220,14 +223,14 @@ a more sophisticated report.
 seq -s= 120 | tr -d '0-9'
 echo Help as of `date`
 seq -s= 120 | tr -d '0-9'
-../cmpCSUM.rb --help
+../dcsumCmp.rb --help
 seq -s= 120 | tr -d '0-9'
 #+end_src
 
 #+RESULTS:
 #+begin_src text :eval never
 =======================================================================================================================
-Help as of Wed Apr 6 17:16:33 PDT 2022
+Help as of Thu Apr 7 17:40:06 PDT 2022
 =======================================================================================================================
 Usage: cmpCSUM.rb [options] [file1 [file2]]
 
@@ -245,6 +248,8 @@ General Options:
                                        If no files are provided, then the last two .dircsum DBs are used.    
                                        If a single file is provided, then the last .dircsum DB is used as    
                                          the left file while the named file is used as the right one.        
+                                       If no directory-to-traverse is provided on the command line           
+                                       and the .dircsum directory exists, then -U is assumed                 
         --doPrefix Y/N               Compute filename prefix
 Report Tweek Options:
         --encodeFN Y/N               Encode filenames
@@ -359,17 +364,17 @@ Apply a code block from this file to a DB.
 seq -s= 120 | tr -d '0-9'
 echo Help as of `date`
 seq -s= 120 | tr -d '0-9'
-./applyOrgBlockSQL.rb --help
+../applyOrgBlockSQL.rb --help
 seq -s= 120 | tr -d '0-9'
 #+end_src
 
 #+RESULTS:
 #+begin_src text :eval never
 =======================================================================================================================
-Help as of Thu, May 6, 2021 8:27:05 PM
+Help as of Thu Apr 7 17:40:16 PDT 2022
 =======================================================================================================================
                                                                        
-Use: applyOrgBlockSQL.rb name_of_db name_of_block [name_of_file]       
+Use: applyOrgBlockSQL.rb name_of_db name_of_block [name_of_org_file]   
                                                                        
   Extract a named code block from an org file (readme.org by default), 
   and apply to the named DB.                                           
