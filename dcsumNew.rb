@@ -1,4 +1,4 @@
-#!/bin/env ruby
+#!/usr/bin/env -S ruby -W0 -E utf-8
 # -*- Mode:Ruby; Coding:us-ascii-unix; fill-column:158 -*-
 ################################################################################################################################################################
 ##
@@ -27,6 +27,10 @@
 #  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
 #  TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #  @endparblock
+# @filedetails
+#
+#  Based on an older perl version.
+#
 ################################################################################################################################################################
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -302,7 +306,7 @@ dircsumMode    = false
 oldFileCtime   = true
 oldFileMtime   = true
 oldFileSize    = true
-$printProgress = 0
+$printProgress = 35
 csumToUse      = :csum_sha256
 opts = OptionParser.new do |opts|
   opts.banner = "Usage: dirCSUM.rb [options] <directory-to-traverse>"
@@ -315,6 +319,7 @@ opts = OptionParser.new do |opts|
   opts.on(                "--schema",         "Print DB schema")           { dumpSchema = true;                         }
   opts.separator "  Output Options:                                                                                     "
   opts.on("-p LEVEL",     "--progress LEVEL", "Verbosity bitmask")         { |v| $printProgress=v.to_i;                 }
+  opts.separator "                                       Default: 35                                                    "
   opts.separator "                            +-----+--------------------------------------------+---------------+      "
   opts.separator "                            | bit | Description                                | Incompatible  |      "
   opts.separator "                            +-----+--------------------------------------------+---------------+      "
@@ -361,7 +366,9 @@ opts = OptionParser.new do |opts|
   opts.separator "                                         - Sets -o to a new file in .dircsum/ sub-directory           "
   opts.separator "                                           May be overridden with an explicitly provided -o option    "
   opts.separator "                                         - Sets the directory to be scanned to the PWD.               "
-  opts.separator "  Behavioral/Tuning Options:"
+  opts.separator "                                       If no directory-to-traverse is provided on the command line    "
+  opts.separator "                                       and the .dircsum directory exists, then -U is assumed          "
+  opts.separator "  Behavioral/Tuning Options:                                                                          "
   opts.on("-k CSUM",      "--csum CSUM",      "Checksum to use")           { |v| if (csumSym.member?(v.upcase)) then
                                                                                    csumToUse = csumSym.member?(v.upcase)
                                                                                  end                                    }
@@ -388,6 +395,16 @@ opts.parse!(ARGV)
 dirToScan = nil
 if ( !(ARGV[0].nil?)) then
   dirToScan = ARGV[0].dup;
+end
+
+if ( !(dircsumMode) && !(dirToScan) ) then
+  if (FileTest.exist?('.dircsum')) then
+    dircsumMode = true;
+    #puts("WARNING: No directory provided, but .dircsum found -- running in -U mode")
+  else
+    puts("ERROR: No directory provided, and .dircsum missing.  Run with -U to force dircsum mode!")
+    exit
+  end
 end
 
 # Adjust the schema by removing lines based on schemaOpt
