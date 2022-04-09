@@ -114,13 +114,57 @@ opts = OptionParser.new do |opts|
   opts.separator "                                       Select lines for which the REGEX matches the HASH column.             "
   opts.on(             "--sNAME REGEX",      "Search criteria for NAME column")   { |v| searchArg.push(['NAME', v]);           }
   opts.separator "                                       Select lines for which the REGEX matches the NAME column.             "
-  opts.on(             "--soAND",  "Boolean search operator")                     { searchArg.push(['SOP', :sop_and]);         }
-  opts.on(             "--soOR",   "Boolean search operator")                     { searchArg.push(['SOP', :sop_or]);          }
-  opts.on(             "--soNOT",  "Boolean search operator")                     { searchArg.push(['SOP', :sop_not]);         }
+  opts.on(             "--sALL",             "Search criteria matching anything") { searchArg.push(['TRUE', true]);            }
+  opts.on(             "--soAND",            "Boolean search operator")           { searchArg.push(['SOP', :sop_and]);         }
+  opts.on(             "--soOR",             "Boolean search operator")           { searchArg.push(['SOP', :sop_or]);          }
+  opts.on(             "--soNOT",            "Boolean search operator")           { searchArg.push(['SOP', :sop_not]);         }
   opts.separator "                                       The --soAND & --soOR arguments change the way search criteria are     "
   opts.separator "                                       used.  Without them all search criteria are ORed together. With       "
   opts.separator "                                       them the search criteria and operators are evaluated as an RPN        "
   opts.separator "                                       expression with a FORTH-like stack.                                   "
+  opts.on(             "--smCHANGE",         "Macro: Show changes")               { searchArg.push([ 'H',   '!=' ]);
+                                                                                    searchArg.push([ 'CT',  '!=' ]);
+                                                                                    searchArg.push([ 'MT',  '!=' ]);
+                                                                                    searchArg.push([ 'SZ',  '!=' ]);
+                                                                                    searchArg.push(['SOP',  :sop_or]);         
+                                                                                    searchArg.push(['SOP',  :sop_or]);         
+                                                                                    searchArg.push(['SOP',  :sop_or]);         }
+  opts.separator "                                       What you get if you don't provide search criteria.  Option only       "
+  opts.separator "                                       exists for UI uniformity. Equivalent to adding the following options: "
+  opts.separator "                                          --sH '!=' --sSZ '!=' --sCT '!=' --sMT '!=' --soOR --soOR --soOR    "
+  opts.on(             "--smCHnoGIT",        "Macro: Changes but ignore GIT")     { searchArg.push([ 'H',   '!=' ]);
+                                                                                    searchArg.push([ 'CT',  '!=' ]);
+                                                                                    searchArg.push([ 'MT',  '!=' ]);
+                                                                                    searchArg.push([ 'SZ',  '!=' ]);
+                                                                                    searchArg.push(['SOP',  :sop_or]);         
+                                                                                    searchArg.push(['SOP',  :sop_or]);         
+                                                                                    searchArg.push(['SOP',  :sop_or]);         
+                                                                                    searchArg.push(['NAME', '\\/\\.git\\/']);
+                                                                                    searchArg.push(['SOP',  :sop_not]);        
+                                                                                    searchArg.push(['SOP',  :sop_and]);        }
+  opts.separator "                                       Show files with any change unless the path contains a /.git/          "
+  opts.separator "                                       component.  Equivalent to adding the following options:               "
+  opts.separator "                                       Equivalent to adding the following options:                           "
+  opts.separator "                                          --smCHANGE --sNAME '\\/\\.git\\/' --soNOT --soAND                  "
+  opts.on(             "--smCHnoCTIME",      "Macro: Changes but ignore ctime")   { searchArg.push([ 'H',   '!=' ]);
+                                                                                    searchArg.push([ 'MT',  '!=' ]);
+                                                                                    searchArg.push([ 'SZ',  '!=' ]);
+                                                                                    searchArg.push(['SOP',  :sop_or]);         
+                                                                                    searchArg.push(['SOP',  :sop_or]);         }
+  opts.separator "                                       Show files with any change except ctime differences.                  "
+  opts.separator "                                       Handy for comparing csum DBs from before and after a copy.            "
+  opts.separator "                                       Equivalent to adding the following options:                           "
+  opts.separator "                                          --sH '!=' --sSZ '!=' --sMT '!=' --soOR --soOR                      "
+  opts.on(             "--smSAME",           "Macro: Stuff that's the same")      { searchArg.push([ 'H',   '=' ]);
+                                                                                    searchArg.push([ 'CT',  '=' ]);
+                                                                                    searchArg.push([ 'MT',  '=' ]);
+                                                                                    searchArg.push([ 'SZ',  '=' ]);
+                                                                                    searchArg.push(['SOP',  :sop_or]);         
+                                                                                    searchArg.push(['SOP',  :sop_or]);         
+                                                                                    searchArg.push(['SOP',  :sop_or]);         }
+  opts.separator "                                       Show files with any change unless the path contains a /.git/          "
+  opts.separator "                                       component.  Equivalent to adding the following options:               "
+  opts.separator "                                          --sH '=' --sSZ '=' --sCT '=' --sMT '=' --soOR --soOR --soOR        "
   opts.separator "                  If no command line search options are present, then lines with changes will be selected    "
   opts.separator "                  as if the following options had been used: --sH '!=' --sSZ '!=' --sCT '!=' --sMT '!='      "
   opts.separator "                                                                                                             "
@@ -134,7 +178,7 @@ opts = OptionParser.new do |opts|
   opts.separator "              Both NL & NR will be '???' if hashes in the DBs are not usable.                                "
   opts.separator "                NOTE: Usually the reason hashes are not usable is the two files use different hash types.    "
   opts.separator "                      It can also happen that one of the files is simply missing hash values altogether      "
-  opts.separator "                      or that the hashes are unreliable (dcsumNew used with '-k name' or '-k 1k').            "
+  opts.separator "                      or that the hashes are unreliable (dcsumNew used with '-k name' or '-k 1k').           "
   opts.separator "    - H ..... Checksum (content) difference between current file and file on other side of same name:        "
   opts.separator "              This field is precisely one character:                                                         "
   opts.separator "                - = file name exists on left & right and hashes are the same                                 "
@@ -174,16 +218,9 @@ opts = OptionParser.new do |opts|
   opts.separator "  been included in a previous duplicate file listing.                                                        "
   opts.separator "                                                                                                             "
   opts.separator "Examples:                                                                                                    "
-  opts.separator "  - List file names for new files and files with content changes.  Usefull for a dynamci backup scheme.      "
+  opts.separator "  - Check out the --smXXX options for some ideas about how to combine search options.                         "
+  opts.separator "  - List file names for new files and files with content changes.  Useful for a dynamic backup scheme.      "
   opts.separator "      --pPrefix N --pColTitles N --pCols NAME --sH '|' --sH '>'                                              "
-  opts.separator "  - Show all changes, but ignore ctime.  Usefull for comparison after a copy operation.                      "
-  opts.separator "      --sH '!=' --sSZ '!=' --sMT '!='                                                                        "
-  opts.separator "  - Show all lines even without changes.  Works because H can't be 'X'                                       "
-  opts.separator "      --sH '!X'                                                                                              "
-  opts.separator "  - Show no lines even without changes.  Usefull for debugging.  Works because H can't be 'X'                "
-  opts.separator "      --sH 'X'                                                                                               "
-  opts.separator "  - Show all changes, but not if the path contains a .git component.                                         "
-  opts.separator "      --sH '!=' --sSZ '!=' --sCT '!=' --sMT '!=' --soOR --soOR --soOR --sNAME '\\/\\.git\\/' --soNOT --soAND "
   opts.separator "                                                                                                             "
 end
 opts.parse!(ARGV)
@@ -350,6 +387,8 @@ searchArg.each do |tag, pat|
       if(debug>=1) then STDERR.puts("ERROR: Bad numeric search argument: #{tag.inspect} => #{pat.inspect}!") end
       exit
     end
+  elsif (tag == 'TRUE') then
+    searchCriteria.push([ tag, pat ]);
   else
     if (tmp=pat.match(/^(!{0,1})(.+)$/i)) then
       searchCriteria.push([tag, [ (tmp[1].upcase == '!'), tmp[2] ] ])
@@ -453,42 +492,40 @@ csumToRep.each do |i|
 
       # Evaluate search criteria
       printThisOneStack = Array.new
-      if (searchCriteria.nil?) then
-        printThisOneStack.push(true)
-      else
-        searchCriteria.each do |tag, pat|
-          if (pat.class == Regexp) then
-            printThisOneStack.push( !(!(theCols[tag].match(pat))))
-          elsif (pat.class == Symbol) then
-            numArgs = ( pat == :sop_not ? 1 : 2)
-            if (printThisOneStack.length < numArgs) then
-              if(debug>=1) then STDERR.puts("ERROR: Search operator (#(#{pat}) requires at least #{numArgs} arguments!") end
-              exit
-            end
-            if (numArgs == 1) then
-              opARG = printThisOneStack.pop();
-              printThisOneStack.push(!(opARG)) # Only have one op that takes one arg
-            else
-              opRHS = printThisOneStack.pop();
-              opLHS = printThisOneStack.pop();
-              if (pat == :sop_and) then
-                printThisOneStack.push(opLHS && opRHS)
-              else
-                printThisOneStack.push(opLHS || opRHS)
-              end
-            end
-          elsif (pat[1].class == Integer) then
-            printThisOneStack.push(((pat[0] == '!') && (theCols[tag].to_i != pat[1])) ||
-                                   ((pat[0] == '=') && (theCols[tag].to_i == pat[1])) ||
-                                   ((pat[0] == '<') && (theCols[tag].to_i <  pat[1])) ||
-                                   ((pat[0] == '>') && (theCols[tag].to_i >  pat[1])))
+      searchCriteria.each do |tag, pat|
+        if (pat.class == Regexp) then
+          printThisOneStack.push( !(!(theCols[tag].match(pat))))
+        elsif (pat.class == TrueClass) then
+          printThisOneStack.push(true);
+        elsif (pat.class == Symbol) then
+          numArgs = ( pat == :sop_not ? 1 : 2)
+          if (printThisOneStack.length < numArgs) then
+            if(debug>=1) then STDERR.puts("ERROR: Search operator (#(#{pat}) requires at least #{numArgs} arguments!") end
+            exit
+          end
+          if (numArgs == 1) then
+            opARG = printThisOneStack.pop();
+            printThisOneStack.push(!(opARG)) # Only have one op that takes one arg
           else
-            tmp = (theCols[tag].slice(0, pat[1].length) == pat[1])
-            printThisOneStack.push( ( pat[0] ? !tmp : tmp ) );
+            opRHS = printThisOneStack.pop();
+            opLHS = printThisOneStack.pop();
+            if (pat == :sop_and) then
+              printThisOneStack.push(opLHS && opRHS)
+            else
+              printThisOneStack.push(opLHS || opRHS)
+            end
           end
-          if ( (!(haveSearchExpr)) && printThisOneStack.last()) then
-            break
-          end
+        elsif (pat[1].class == Integer) then
+          printThisOneStack.push(((pat[0] == '!') && (theCols[tag].to_i != pat[1])) ||
+                                 ((pat[0] == '=') && (theCols[tag].to_i == pat[1])) ||
+                                 ((pat[0] == '<') && (theCols[tag].to_i <  pat[1])) ||
+                                 ((pat[0] == '>') && (theCols[tag].to_i >  pat[1])))
+        else
+          tmp = (theCols[tag].slice(0, pat[1].length) == pat[1])
+          printThisOneStack.push( ( pat[0] ? !tmp : tmp ) );
+        end
+        if ( (!(haveSearchExpr)) && printThisOneStack.last()) then
+          break
         end
       end
 
