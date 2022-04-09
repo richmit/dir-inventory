@@ -45,10 +45,13 @@ srchArgPat  = Regexp.new('-+s(' + allCols.join('|') + ')=(.+)$')
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 pColTitles  = true
 searchArg   = Array.new
-searchArgD  = [[ 'H'  , '!=' ],
-               [ 'CT' , '!=' ],
-               [ 'MT' , '!=' ],
-               [ 'SZ' , '!=' ]]
+searchArgD  = [[  'H',  '!='   ],
+               [ 'CT',  '!='   ],
+               [ 'MT',  '!='   ],
+               [ 'SZ',  '!='   ],
+               ['SOP',  :sop_or],
+               ['SOP',  :sop_or],
+               ['SOP',  :sop_or]]
 csumToRep   = [ 0, 1 ]
 csumFiles   = Array.new
 pCols       = Array.new()
@@ -109,7 +112,7 @@ opts = OptionParser.new do |opts|
   opts.separator "                                       The PATTERN used for --sH, --sCT, --sMT, & --sSZ are used to match    "
   opts.separator "                                       the starting bytes of the corresponding column. If the PATTERN        "
   opts.separator "                                       starts with an exclamation point (!), then the match is reversed.     "
-  opts.separator "                                       Ex: --sH '!=' matchs lines not starting with '=' in the 'H' column.   "
+  opts.separator "                                       Ex: --sH '!=' matches lines not starting with '=' in the 'H' column.   "
   opts.on(             "--sHASH REGEX",      "Search criteria for HASH column")   { |v| searchArg.push(['HASH', v]);           }
   opts.separator "                                       Select lines for which the REGEX matches the HASH column.             "
   opts.on(             "--sNAME REGEX",      "Search criteria for NAME column")   { |v| searchArg.push(['NAME', v]);           }
@@ -132,20 +135,6 @@ opts = OptionParser.new do |opts|
   opts.separator "                                       What you get if you don't provide search criteria.  Option only       "
   opts.separator "                                       exists for UI uniformity. Equivalent to adding the following options: "
   opts.separator "                                          --sH '!=' --sSZ '!=' --sCT '!=' --sMT '!=' --soOR --soOR --soOR    "
-  opts.on(             "--smCHnoGIT",        "Macro: Changes but ignore GIT")     { searchArg.push([ 'H',   '!=' ]);
-                                                                                    searchArg.push([ 'CT',  '!=' ]);
-                                                                                    searchArg.push([ 'MT',  '!=' ]);
-                                                                                    searchArg.push([ 'SZ',  '!=' ]);
-                                                                                    searchArg.push(['SOP',  :sop_or]);         
-                                                                                    searchArg.push(['SOP',  :sop_or]);         
-                                                                                    searchArg.push(['SOP',  :sop_or]);         
-                                                                                    searchArg.push(['NAME', '\\/\\.git\\/']);
-                                                                                    searchArg.push(['SOP',  :sop_not]);        
-                                                                                    searchArg.push(['SOP',  :sop_and]);        }
-  opts.separator "                                       Show files with any change unless the path contains a /.git/          "
-  opts.separator "                                       component.  Equivalent to adding the following options:               "
-  opts.separator "                                       Equivalent to adding the following options:                           "
-  opts.separator "                                          --smCHANGE --sNAME '\\/\\.git\\/' --soNOT --soAND                  "
   opts.on(             "--smCHnoCTIME",      "Macro: Changes but ignore ctime")   { searchArg.push([ 'H',   '!=' ]);
                                                                                     searchArg.push([ 'MT',  '!=' ]);
                                                                                     searchArg.push([ 'SZ',  '!=' ]);
@@ -165,6 +154,30 @@ opts = OptionParser.new do |opts|
   opts.separator "                                       Show files with any change unless the path contains a /.git/          "
   opts.separator "                                       component.  Equivalent to adding the following options:               "
   opts.separator "                                          --sH '=' --sSZ '=' --sCT '=' --sMT '=' --soOR --soOR --soOR        "
+  opts.on(             "--smNoGIT",          "And Macro: Ignore GIT")             { if (searchArg.empty?) then 
+                                                                                      searchArg = searchArgD.clone
+                                                                                    end
+                                                                                    searchArg.push(['NAME', '\\/\\.git\\/']);
+                                                                                    searchArg.push(['SOP',  :sop_not]);        
+                                                                                    searchArg.push(['SOP',  :sop_and]);        }
+  opts.separator "                                       If search criteria appear before this option, equivalent to:          "
+  opts.separator "                                          --sNAME '\\/\\.git\\/' --soNOT --soAND                             "
+  opts.separator "                                       Otherwise equivalent to adding the following options:                 "
+  opts.separator "                                          --smCHANGE --sNAME '\\/\\.git\\/' --soNOT --soAND                  "
+  opts.on(             "--smNoBAK",          "And Macro: Ignore backup files")    { if (searchArg.empty?) then 
+                                                                                      searchArg = searchArgD.clone
+                                                                                    end
+                                                                                    searchArg.push(['NAME', '~$']);
+                                                                                    searchArg.push(['NAME', '\\.bak$']);
+                                                                                    searchArg.push(['NAME', '\\.BAK$']);
+                                                                                    searchArg.push(['SOP',  :sop_or]);         
+                                                                                    searchArg.push(['SOP',  :sop_or]);         
+                                                                                    searchArg.push(['SOP',  :sop_not]);        
+                                                                                    searchArg.push(['SOP',  :sop_and]);        }
+  opts.separator "                                       If search criteria appear before this option, equivalent to:          "
+  opts.separator "                                          --sNAME '(~|\\.bak|\\.BAK)$' --soNOT --soAND                       "
+  opts.separator "                                       Otherwise equivalent to adding the following options:                 "
+  opts.separator "                                          --smCHANGE --sNAME '(~|\\.bak|\\.BAK)$' --soNOT --soAND            "
   opts.separator "                  If no command line search options are present, then lines with changes will be selected    "
   opts.separator "                  as if the following options had been used: --sH '!=' --sSZ '!=' --sCT '!=' --sMT '!='      "
   opts.separator "                                                                                                             "
