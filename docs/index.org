@@ -94,10 +94,10 @@ seq -s= 120 | tr -d '0-9'
 #+RESULTS:
 #+begin_src text :eval never
 =======================================================================================================================
-Help as of Thu Apr 7 17:39:27 PDT 2022
+Help as of Sat Apr 9 12:34:22 PDT 2022
 =======================================================================================================================
-Usage: dirCSUM.rb [options] <directory-to-traverse>
-
+Usage: dcsumNew.rb [options] <directory-to-traverse>                                                   
+                                                                                                      
 Scan the directory tree rooted at <directory-to-traverse>, and create an SQLite3 database             
 containing various file meta data.                                                                    
                                                                                                       
@@ -194,9 +194,9 @@ seq -s= 120 | tr -d '0-9'
 #+RESULTS:
 #+begin_src text :eval never
 =======================================================================================================================
-Help as of Thu Apr 7 17:39:36 PDT 2022
+Help as of Sat Apr 9 12:33:53 PDT 2022
 =======================================================================================================================
-Usage: cmpSQL.rb [options] scanDB1 scanDB2                                            
+Usage: dcsumCmpDB.rb [options] scanDB1 scanDB2                                        
                                                                                      
 Options:                                                                             
     -h, --help                       Show this message
@@ -230,11 +230,11 @@ seq -s= 120 | tr -d '0-9'
 #+RESULTS:
 #+begin_src text :eval never
 =======================================================================================================================
-Help as of Thu Apr 7 17:40:06 PDT 2022
+Help as of Sat Apr 9 12:35:11 PDT 2022
 =======================================================================================================================
-Usage: cmpCSUM.rb [options] [file1 [file2]]
-
-General Options:
+Usage: dcsumCmp [options] [file1 [file2]]                                                                     
+                                                                                                             
+General Options:                                                                                             
     -h, --help                       Show this message
     -v, --debug INT                  Set debug level
                                        0 .. Print report                                                     
@@ -274,11 +274,12 @@ Search Options:
                                        The PATTERN used for --sH, --sCT, --sMT, & --sSZ are used to match    
                                        the starting bytes of the corresponding column. If the PATTERN        
                                        starts with an exclamation point (!), then the match is reversed.     
-                                       Ex: --sH '!=' matchs lines not starting with '=' in the 'H' column.   
+                                       Ex: --sH '!=' matches lines not starting with '=' in the 'H' column.   
         --sHASH REGEX                Search criteria for HASH column
                                        Select lines for which the REGEX matches the HASH column.             
         --sNAME REGEX                Search criteria for NAME column
                                        Select lines for which the REGEX matches the NAME column.             
+        --sALL                       Search criteria matching anything
         --soAND                      Boolean search operator
         --soOR                       Boolean search operator
         --soNOT                      Boolean search operator
@@ -286,6 +287,29 @@ Search Options:
                                        used.  Without them all search criteria are ORed together. With       
                                        them the search criteria and operators are evaluated as an RPN        
                                        expression with a FORTH-like stack.                                   
+        --smCHANGE                   Macro: Show changes
+                                       What you get if you don't provide search criteria.  Option only       
+                                       exists for UI uniformity. Equivalent to adding the following options: 
+                                          --sH '!=' --sSZ '!=' --sCT '!=' --sMT '!=' --soOR --soOR --soOR    
+        --smCHnoCTIME                Macro: Changes but ignore ctime
+                                       Show files with any change except ctime differences.                  
+                                       Handy for comparing csum DBs from before and after a copy.            
+                                       Equivalent to adding the following options:                           
+                                          --sH '!=' --sSZ '!=' --sMT '!=' --soOR --soOR                      
+        --smSAME                     Macro: Stuff that's the same
+                                       Show files with any change unless the path contains a /.git/          
+                                       component.  Equivalent to adding the following options:               
+                                          --sH '=' --sSZ '=' --sCT '=' --sMT '=' --soOR --soOR --soOR        
+        --smNoGIT                    And Macro: Ignore GIT
+                                       If search criteria appear before this option, equivalent to:          
+                                          --sNAME '\/\.git\/' --soNOT --soAND                             
+                                       Otherwise equivalent to adding the following options:                 
+                                          --smCHANGE --sNAME '\/\.git\/' --soNOT --soAND                  
+        --smNoBAK                    And Macro: Ignore backup files
+                                       If search criteria appear before this option, equivalent to:          
+                                          --sNAME '(~|\.bak|\.BAK)$' --soNOT --soAND                       
+                                       Otherwise equivalent to adding the following options:                 
+                                          --smCHANGE --sNAME '(~|\.bak|\.BAK)$' --soNOT --soAND            
                   If no command line search options are present, then lines with changes will be selected    
                   as if the following options had been used: --sH '!=' --sSZ '!=' --sCT '!=' --sMT '!='      
                                                                                                              
@@ -299,7 +323,7 @@ Output:
               Both NL & NR will be '???' if hashes in the DBs are not usable.                                
                 NOTE: Usually the reason hashes are not usable is the two files use different hash types.    
                       It can also happen that one of the files is simply missing hash values altogether      
-                      or that the hashes are unreliable (dcsumNew used with '-k name' or '-k 1k').            
+                      or that the hashes are unreliable (dcsumNew used with '-k name' or '-k 1k').           
     - H ..... Checksum (content) difference between current file and file on other side of same name:        
               This field is precisely one character:                                                         
                 - = file name exists on left & right and hashes are the same                                 
@@ -339,16 +363,9 @@ Output:
   been included in a previous duplicate file listing.                                                        
                                                                                                              
 Examples:                                                                                                    
-  - List file names for new files and files with content changes.  Usefull for a dynamci backup scheme.      
+  - Check out the --smXXX options for some ideas about how to combine search options.                         
+  - List file names for new files and files with content changes.  Useful for a dynamic backup scheme.      
       --pPrefix N --pColTitles N --pCols NAME --sH '|' --sH '>'                                              
-  - Show all changes, but ignore ctime.  Usefull for comparison after a copy operation.                      
-      --sH '!=' --sSZ '!=' --sMT '!='                                                                        
-  - Show all lines even without changes.  Works because H can't be 'X'                                       
-      --sH '!X'                                                                                              
-  - Show no lines even without changes.  Usefull for debugging.  Works because H can't be 'X'                
-      --sH 'X'                                                                                               
-  - Show all changes, but not if the path contains a .git component.                                         
-      --sH '!=' --sSZ '!=' --sCT '!=' --sMT '!=' --soOR --soOR --soOR --sNAME '\/\.git\/' --soNOT --soAND 
                                                                                                              
 =======================================================================================================================
 #+end_src
@@ -371,7 +388,7 @@ seq -s= 120 | tr -d '0-9'
 #+RESULTS:
 #+begin_src text :eval never
 =======================================================================================================================
-Help as of Thu Apr 7 17:40:16 PDT 2022
+Help as of Sat Apr 9 12:35:19 PDT 2022
 =======================================================================================================================
                                                                        
 Use: applyOrgBlockSQL.rb name_of_db name_of_block [name_of_org_file]   

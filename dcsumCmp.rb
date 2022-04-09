@@ -2,7 +2,7 @@
 # -*- Mode:Ruby; Coding:us-ascii-unix; fill-column:158 -*-
 ################################################################################################################################################################
 ##
-# @file      cmpCSUM.rb
+# @file      dcsumCmp.rb
 # @author    Mitch Richling <https://www.mitchr.me>
 # @brief     Compare checksum files.@EOL
 # @std       Ruby1.9
@@ -70,9 +70,9 @@ pColsFmt    = { 'NL'   => "-3",
                 'HASH' => "-36",
                 'NAME' => 0 }
 opts = OptionParser.new do |opts|
-  opts.banner = "Usage: cmpCSUM.rb [options] [file1 [file2]]"
-  opts.separator ""
-  opts.separator "General Options:"
+  opts.banner = "Usage: dcsumCmp [options] [file1 [file2]]                                                                     "
+  opts.separator "                                                                                                             "
+  opts.separator "General Options:                                                                                             "
   opts.on("-h",        "--help",             "Show this message")                 { puts opts; exit;                           }
   opts.on("-v",        "--debug INT",        "Set debug level")                   { |v| debug=v.to_i;                          }
   opts.separator "                                       0 .. Print report                                                     "

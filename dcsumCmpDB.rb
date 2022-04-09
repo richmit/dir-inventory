@@ -42,7 +42,7 @@ difDBhasFS    = false
 verbose       = false
 difDBhasXidx  = false
 opts = OptionParser.new do |opts|
-  opts.banner = "Usage: cmpSQL.rb [options] scanDB1 scanDB2                                            "
+  opts.banner = "Usage: dcsumCmpDB.rb [options] scanDB1 scanDB2                                        "
   opts.separator "                                                                                     "
   opts.separator "Options:                                                                             "
   opts.on("-h",        "--help",          "Show this message")                  { puts opts; exit      }

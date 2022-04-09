@@ -289,11 +289,11 @@ SQL
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Process command line arguments
 csumSym = { 'SHA1'  => :csum_sha1,
-                'SHA25' => :csum_sha256,
-                'MD5'   => :csum_md5,
-                'NIL'   => :csum_nil,
-                '1K'    => :csum_1k,
-                'NAME'  => :csum_name }
+            'SHA25' => :csum_sha256,
+            'MD5'   => :csum_md5,
+            'NIL'   => :csum_nil,
+            '1K'    => :csum_1k,
+            'NAME'  => :csum_name }
 doMitchExtXfrm = true
 timeStart      = Time.now
 outDBfile      = Time.now.strftime('%Y%m%d%H%M%S_dircsum.sqlite')
@@ -309,8 +309,8 @@ oldFileSize    = true
 $printProgress = 35
 csumToUse      = :csum_sha256
 opts = OptionParser.new do |opts|
-  opts.banner = "Usage: dirCSUM.rb [options] <directory-to-traverse>"
-  opts.separator ""
+  opts.banner = "Usage: dcsumNew.rb [options] <directory-to-traverse>                                                   "
+  opts.separator "                                                                                                      "
   opts.separator "Scan the directory tree rooted at <directory-to-traverse>, and create an SQLite3 database             "
   opts.separator "containing various file meta data.                                                                    "
   opts.separator "                                                                                                      "
