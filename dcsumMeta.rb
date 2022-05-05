@@ -54,7 +54,7 @@ opts = OptionParser.new do |opts|
   opts.separator "Options:                                                                                              "
   opts.on("-h",        "--help",             "Show this message") { puts opts; exit;                                    }
   opts.on("-U",        "--dircsum",          "Set dircsum mode")  { dircsumMode = true;                                 }
-  opts.separator "                                       Uses the most recient .dircsum DB.                             "
+  opts.separator "                                       Uses the *TWO* most recient .dircsum DBs.                      "
   opts.separator "                                       If no directory-to-traverse is provided on the command line    "
   opts.separator "                                       and the .dircsum directory exists, then -U is assumed          "
   opts.separator "                                                                                                      "
@@ -78,7 +78,10 @@ if(dircsumMode) then
   if(FileTest.exist?('.dircsum')) then
     oldFileFiles = Dir.glob('.dircsum/??????????????_dircsum.sqlite').sort
     if (oldFileFiles.last()) then
-      files.push(oldFileFiles.last())
+      files.push(oldFileFiles.pop())
+      if (oldFileFiles.last()) then
+        files.push(oldFileFiles.last())
+      end
     else
       if(debug>=1) then STDERR.puts("WARNING: No DB files found in .dircsum directory in -U mode!") end
     end
