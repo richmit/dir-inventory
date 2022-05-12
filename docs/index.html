@@ -3,15 +3,15 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2022-04-09 Sat 12:35 -->
+<!-- 2022-05-12 Thu 18:25 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=1024, initial-scale=1" />
 <title>Filesystem Checksum Tools</title>
-<meta name="generator" content="Org mode" />
 <meta name="author" content="Mitch Richling" />
 <meta name="keywords" content="ruby file-system file checksum sha md5" />
-<style type="text/css">
- <!--/*--><![CDATA[/*><!--*/
+<meta name="generator" content="Org Mode" />
+<style>
+  #content { max-width: 60em; margin: auto; }
   .title  { text-align: center;
              margin-bottom: .2em; }
   .subtitle { text-align: center;
@@ -32,8 +32,9 @@
   #postamble p, #preamble p { font-size: 90%; margin: .2em; }
   p.verse { margin-left: 3%; }
   pre {
-    border: 1px solid #ccc;
-    box-shadow: 3px 3px 3px #eee;
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
     padding: 8pt;
     font-family: monospace;
     overflow: auto;
@@ -42,21 +43,21 @@
   pre.src {
     position: relative;
     overflow: auto;
-    padding-top: 1.2em;
   }
   pre.src:before {
     display: none;
     position: absolute;
-    background-color: white;
-    top: -10px;
-    right: 10px;
+    top: -8px;
+    right: 12px;
     padding: 3px;
-    border: 1px solid black;
+    color: #555;
+    background-color: #f2f2f299;
   }
   pre.src:hover:before { display: inline; margin-top: 14px;}
   /* Languages per Org manual */
   pre.src-asymptote:before { content: 'Asymptote'; }
   pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
   pre.src-C:before { content: 'C'; }
   /* pre.src-C++ doesn't work in CSS */
   pre.src-clojure:before { content: 'Clojure'; }
@@ -192,7 +193,6 @@
   .org-info-js_search-highlight
     { background-color: #ffff00; color: #000000; font-weight: bold; }
   .org-svg { width: 90%; }
-  /*]]>*/-->
 </style>
 <style>body { width: 95%; margin: 2% auto; font-size: 18px; line-height: 1.4em; font-family: Georgia, serif; color: black; background-color: white; }</style>
 <style>body { min-width: 500px; max-width: 1024px; }</style>
@@ -224,15 +224,14 @@
              }
 });
 </script>
-<script type="text/javascript"
-        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
 </head>
 <body>
 <div id="org-div-home-and-up">
  <a accesskey="h" href="https://github.com/richmit/dir-inventory"> UP </a>
  |
  <a accesskey="H" href="https://www.mitchr.me/"> HOME </a>
-</div><div id="content">
+</div><div id="content" class="content">
 <h1 class="title">Filesystem Checksum Tools</h1>
 <table border="2 solid #ccc" cellspacing="0" cellpadding="6" rules="groups" frame="hsides" align="center">
 
@@ -250,12 +249,12 @@
 
 <tr>
 <td class="org-right"><b>Updated:</b></td>
-<td class="org-left"><i>2022-04-09 12:35:24</i></td>
+<td class="org-left"><i>2022-05-12 15:35:03</i></td>
 </tr>
 
 <tr>
 <td class="org-right"><b>Generated:</b></td>
-<td class="org-left"><i>2022-04-09 12:35:24</i></td>
+<td class="org-left"><i>2022-05-12 18:25:31</i></td>
 </tr>
 </tbody>
 </table>
@@ -263,9 +262,9 @@
 Copyright 2022 Mitch Richling. All rights reserved.
 </p>
 
-<div id="table-of-contents">
+<div id="table-of-contents" role="doc-toc">
 <h2>Table of Contents</h2>
-<div id="text-table-of-contents">
+<div id="text-table-of-contents" role="doc-toc">
 <ul>
 <li><a href="#intro">1. Introduction</a></li>
 <li><a href="#scripts">2. The scripts</a>
@@ -279,190 +278,190 @@ Copyright 2022 Mitch Richling. All rights reserved.
 <li><a href="#math">3. A Little Theory</a>
 <ul>
 <li><a href="#math-def">3.1. Definitions</a></li>
-<li><a href="#org32cd294">3.2. An Example</a></li>
-<li><a href="#org8a0cb82">3.3. Formulas</a></li>
+<li><a href="#orgd25e537">3.2. An Example</a></li>
+<li><a href="#orgbc54b85">3.3. Formulas</a></li>
 <li><a href="#db-schema">3.4. The DB schema</a></li>
 </ul>
 </li>
-<li><a href="#orge150c87">4. Example SQL Queries</a>
+<li><a href="#org60e633a">4. Example SQL Queries</a>
 <ul>
-<li><a href="#orgb61a07f">4.1. Filesystem data</a>
+<li><a href="#org7d4e9df">4.1. Filesystem data</a>
 <ul>
-<li><a href="#org03eb7d7">4.1.1. Selecting objects in a sub-tree or sub-directory</a>
+<li><a href="#orgfbe2773">4.1.1. Selecting objects in a sub-tree or sub-directory</a>
 <ul>
-<li><a href="#orgc0c7d26">4.1.1.1. Disocver the <code>lft</code> and <code>rgt</code> values for our path</a></li>
-<li><a href="#orgce51e9c">4.1.1.2. Find all roots of all subtrees containing object</a></li>
-<li><a href="#orga0fdd3f">4.1.1.3. Select objects in this sub-tree</a></li>
-<li><a href="#orgc11d467">4.1.1.4. Select objects directly in this sub-directory</a></li>
+<li><a href="#org171d938">4.1.1.1. Disocver the <code>lft</code> and <code>rgt</code> values for our path</a></li>
+<li><a href="#org69dece1">4.1.1.2. Find all roots of all subtrees containing object</a></li>
+<li><a href="#org9dfabde">4.1.1.3. Select objects in this sub-tree</a></li>
+<li><a href="#org2dcb7ac">4.1.1.4. Select objects directly in this sub-directory</a></li>
 </ul>
 </li>
-<li><a href="#org0c3b84a">4.1.2. Listing relative path names</a>
+<li><a href="#orgce78a3c">4.1.2. Listing relative path names</a>
 <ul>
-<li><a href="#orgcc224e6">4.1.2.1. Includeing the root of the scan</a></li>
-<li><a href="#org2791c4c">4.1.2.2. Excludeing the root of the scan</a></li>
+<li><a href="#org0ef5703">4.1.2.1. Includeing the root of the scan</a></li>
+<li><a href="#orgd7aa8b2">4.1.2.2. Excludeing the root of the scan</a></li>
 </ul>
 </li>
-<li><a href="#orgff6bbaf">4.1.3. Listing fully qualified names</a></li>
-<li><a href="#org8f35cd7">4.1.4. Orphaned Objects</a>
+<li><a href="#org980d276">4.1.3. Listing fully qualified names</a></li>
+<li><a href="#org04b466b">4.1.4. Orphaned Objects</a>
 <ul>
-<li><a href="#org560d63b">4.1.4.1. Fully qualified path names for files which have no owner in the <code>users</code> table</a></li>
-<li><a href="#org29e4f8a">4.1.4.2. Space consumed by files which have no owner in the <code>users</code> table</a></li>
-<li><a href="#org79baded">4.1.4.3. Fully qualified path names for files which have no owner in the <code>groups</code> table</a></li>
-<li><a href="#orgb8cb254">4.1.4.4. Space consumed by files which have no owner in the <code>groups</code> table</a></li>
+<li><a href="#org132204e">4.1.4.1. Fully qualified path names for files which have no owner in the <code>users</code> table</a></li>
+<li><a href="#org2b8796c">4.1.4.2. Space consumed by files which have no owner in the <code>users</code> table</a></li>
+<li><a href="#orgb67969f">4.1.4.3. Fully qualified path names for files which have no owner in the <code>groups</code> table</a></li>
+<li><a href="#org7b07217">4.1.4.4. Space consumed by files which have no owner in the <code>groups</code> table</a></li>
 </ul>
 </li>
-<li><a href="#orgc270d01">4.1.5. Duplicate Files</a>
+<li><a href="#org4c73ac0">4.1.5. Duplicate Files</a>
 <ul>
-<li><a href="#org674135b">4.1.5.1. List check sum and fully qualified path names for non-empty, regular files with the same check sums</a></li>
-<li><a href="#org0363545">4.1.5.2. Space used by duplicated files</a></li>
+<li><a href="#org3a2d965">4.1.5.1. List check sum and fully qualified path names for non-empty, regular files with the same check sums</a></li>
+<li><a href="#org376e3ad">4.1.5.2. Space used by duplicated files</a></li>
 </ul>
 </li>
-<li><a href="#orga2d9fc5">4.1.6. Biggest files</a>
+<li><a href="#org65d60a3">4.1.6. Biggest files</a>
 <ul>
-<li><a href="#org515c35d">4.1.6.1. Relative path and size for the largest file(s)</a></li>
-<li><a href="#org08f03ca">4.1.6.2. Relative path and size for the largest 20 files</a></li>
+<li><a href="#org6eca9f8">4.1.6.1. Relative path and size for the largest file(s)</a></li>
+<li><a href="#org8188ccd">4.1.6.2. Relative path and size for the largest 20 files</a></li>
 </ul>
 </li>
-<li><a href="#org7b0ea75">4.1.7. File size statstics</a>
+<li><a href="#org2d25128">4.1.7. File size statstics</a>
 <ul>
-<li><a href="#org390f694">4.1.7.1. Relative path and size for the median file</a></li>
-<li><a href="#org1215ea3">4.1.7.2. variance, mean, count, sum, &amp; sum of squares</a></li>
-<li><a href="#orge2a9c59">4.1.7.3. variance, mean, count, sum, &amp; sum of squares broken out by file extention</a></li>
+<li><a href="#org95bc3b2">4.1.7.1. Relative path and size for the median file</a></li>
+<li><a href="#org244ba65">4.1.7.2. variance, mean, count, sum, &amp; sum of squares</a></li>
+<li><a href="#org32c1755">4.1.7.3. variance, mean, count, sum, &amp; sum of squares broken out by file extention</a></li>
 </ul>
 </li>
-<li><a href="#org9825ba4">4.1.8. Size in GB</a>
+<li><a href="#orge9f1347">4.1.8. Size in GB</a>
 <ul>
-<li><a href="#org73d9386">4.1.8.1. For jpegs</a></li>
-<li><a href="#orgff28969">4.1.8.2. For PDFs</a></li>
-<li><a href="#orga439a75">4.1.8.3. By each user (<code>userid</code> &amp; <code>uname</code>)</a></li>
-<li><a href="#org2f53c17">4.1.8.4. By each user (<code>groupid</code> &amp; <code>gname</code>)</a></li>
-<li><a href="#org81d38f9">4.1.8.5. By each user (<code>userid</code>, <code>uname, =groupid</code> &amp; <code>gname</code>)</a></li>
-<li><a href="#org438c915">4.1.8.6. By age</a>
+<li><a href="#org46ec456">4.1.8.1. For jpegs</a></li>
+<li><a href="#org36f9c66">4.1.8.2. For PDFs</a></li>
+<li><a href="#org2604ea1">4.1.8.3. By each user (<code>userid</code> &amp; <code>uname</code>)</a></li>
+<li><a href="#org4906a9b">4.1.8.4. By each user (<code>groupid</code> &amp; <code>gname</code>)</a></li>
+<li><a href="#orgbe8d651">4.1.8.5. By each user (<code>userid</code>, <code>uname, =groupid</code> &amp; <code>gname</code>)</a></li>
+<li><a href="#org4e410c0">4.1.8.6. By age</a>
 <ul>
-<li><a href="#orgdf414c2">4.1.8.6.1. By month</a></li>
-<li><a href="#org1ddce97">4.1.8.6.2. By year</a></li>
+<li><a href="#orgf1db47c">4.1.8.6.1. By month</a></li>
+<li><a href="#org908b73c">4.1.8.6.2. By year</a></li>
 </ul>
 </li>
-<li><a href="#orgee492cb">4.1.8.7. By a subtree</a>
+<li><a href="#orgf2e76aa">4.1.8.7. By a subtree</a>
 <ul>
-<li><a href="#org064fd61">4.1.8.7.1. Disocver the <code>lft</code> and <code>rgt</code> values for our path</a></li>
-<li><a href="#org25d7632">4.1.8.7.2. Size of everything in the directory tree</a></li>
-<li><a href="#org981a9cf">4.1.8.7.3. Size of the objects directly contained in that directory</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a href="#org2339258">4.1.9. Maximum directory depth</a>
-<ul>
-<li><a href="#org6d7fdb1">4.1.9.1. Find the maximum depth</a></li>
-<li><a href="#org9077af1">4.1.9.2. Find the files at  maximum depth</a></li>
-</ul>
-</li>
-<li><a href="#org14de629">4.1.10. Differences between scans</a>
-<ul>
-<li><a href="#orgc1c75ce">4.1.10.1. Filename in left but not right</a></li>
-<li><a href="#org0caabf7">4.1.10.2. Filename in right but not left</a></li>
-<li><a href="#org23c0ab4">4.1.10.3. Files on left with content matching no file on right</a></li>
-<li><a href="#org97070f2">4.1.10.4. Files on right with content matching no file on left</a></li>
-<li><a href="#org26521e7">4.1.10.5. Checksums that only exist in one of the scans</a></li>
-<li><a href="#orgbb9fb87">4.1.10.6. Objects with same name but diffrent content</a></li>
-<li><a href="#org4baa542">4.1.10.7. Objects with same name but diffrent time stamps</a></li>
-<li><a href="#org531846f">4.1.10.8. Diffrence Report</a></li>
-</ul>
-</li>
-<li><a href="#orgec1f5a0">4.1.11. Tree traversial</a>
-<ul>
-<li><a href="#orgadffa61">4.1.11.1. If id is in pre-order tree traversial order, then&#x2026;</a>
-<ul>
-<li><a href="#org7710ddb">4.1.11.1.1. Fast method using <code>id</code> from the <code>fsobj</code> table</a></li>
-<li><a href="#orgc85f0b4">4.1.11.1.2. Fast method using <code>lft</code> from the <code>fsobj</code> table</a></li>
-<li><a href="#org0f34806">4.1.11.1.3. Slow method using <code>annofsobj</code> table</a></li>
-</ul>
-</li>
-<li><a href="#orgd0884a9">4.1.11.2. With adjcency table (id &amp; pid)</a></li>
+<li><a href="#org2324c72">4.1.8.7.1. Disocver the <code>lft</code> and <code>rgt</code> values for our path</a></li>
+<li><a href="#org9b84373">4.1.8.7.2. Size of everything in the directory tree</a></li>
+<li><a href="#org9592632">4.1.8.7.3. Size of the objects directly contained in that directory</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org8fe1a25">4.2. Scan Performance</a>
+<li><a href="#org141f7b2">4.1.9. Maximum directory depth</a>
 <ul>
-<li><a href="#orge37ad77">4.2.1. Objects/second scanned during filesystem scan phase</a></li>
-<li><a href="#org6d6aca1">4.2.2. Objects/second process for entire process run time</a></li>
-<li><a href="#org227dfad">4.2.3. Megaabytes/second processed durring DB dump and CSUM</a></li>
+<li><a href="#orgaa734ba">4.1.9.1. Find the maximum depth</a></li>
+<li><a href="#org00d8f17">4.1.9.2. Find the files at  maximum depth</a></li>
 </ul>
 </li>
-<li><a href="#org5697b0f">4.3. How to make SQLite faster!</a>
+<li><a href="#org6d071ca">4.1.10. Differences between scans</a>
 <ul>
-<li><a href="#org6667891">4.3.1. On disk</a>
-<ul>
-<li><a href="#org2920943">4.3.1.1. Add indexes for faster queries (<code>faster1</code>)</a></li>
-<li><a href="#org655bb30">4.3.1.2. Materialize smaller views and add indexes to result (<code>faster2</code>)</a></li>
-<li><a href="#orga5e6e79">4.3.1.3. Materialize the BIG view and add indexes to result (<code>faster3</code>)</a></li>
+<li><a href="#orga05b73d">4.1.10.1. Filename in left but not right</a></li>
+<li><a href="#org2d6bea0">4.1.10.2. Filename in right but not left</a></li>
+<li><a href="#orgc84bd27">4.1.10.3. Files on left with content matching no file on right</a></li>
+<li><a href="#orga6880ce">4.1.10.4. Files on right with content matching no file on left</a></li>
+<li><a href="#orgdabc0bd">4.1.10.5. Checksums that only exist in one of the scans</a></li>
+<li><a href="#org7ed3303">4.1.10.6. Objects with same name but diffrent content</a></li>
+<li><a href="#org09a6c80">4.1.10.7. Objects with same name but diffrent time stamps</a></li>
+<li><a href="#org3828378">4.1.10.8. Diffrence Report</a></li>
 </ul>
 </li>
-<li><a href="#org64c214d">4.3.2. In RAM!</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a href="#orga08682d">5. Tools to access scan DBs</a>
+<li><a href="#orgee1d5f6">4.1.11. Tree traversial</a>
 <ul>
-<li><a href="#org6356c5e">5.1. sqlite3</a></li>
-<li><a href="#org56d3125">5.2. Shell and sqlite3</a></li>
-<li><a href="#org79fe873">5.3. Shell, org-mode file, and sqlite3 (with a bit of ruby)</a></li>
-<li><a href="#org716ef70">5.4. R and dplyr</a></li>
-<li><a href="#org46e6a13">5.5. R and RSQLite</a></li>
-<li><a href="#org94596bd">5.6. Emacs and org-mode</a></li>
+<li><a href="#org07333ba">4.1.11.1. If id is in pre-order tree traversial order, then&#x2026;</a>
+<ul>
+<li><a href="#org17e5234">4.1.11.1.1. Fast method using <code>id</code> from the <code>fsobj</code> table</a></li>
+<li><a href="#orgdf503c0">4.1.11.1.2. Fast method using <code>lft</code> from the <code>fsobj</code> table</a></li>
+<li><a href="#orged48206">4.1.11.1.3. Slow method using <code>annofsobj</code> table</a></li>
+</ul>
+</li>
+<li><a href="#orge86c800">4.1.11.2. With adjcency table (id &amp; pid)</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#orga87f4df">4.2. Scan Performance</a>
+<ul>
+<li><a href="#orge2ab498">4.2.1. Objects/second scanned during filesystem scan phase</a></li>
+<li><a href="#orga727acc">4.2.2. Objects/second process for entire process run time</a></li>
+<li><a href="#org36f7bb8">4.2.3. Megaabytes/second processed durring DB dump and CSUM</a></li>
+</ul>
+</li>
+<li><a href="#org42d5d3b">4.3. How to make SQLite faster!</a>
+<ul>
+<li><a href="#orgc9a193f">4.3.1. On disk</a>
+<ul>
+<li><a href="#orga0970fa">4.3.1.1. Add indexes for faster queries (<code>faster1</code>)</a></li>
+<li><a href="#orgf3cb009">4.3.1.2. Materialize smaller views and add indexes to result (<code>faster2</code>)</a></li>
+<li><a href="#org5658f26">4.3.1.3. Materialize the BIG view and add indexes to result (<code>faster3</code>)</a></li>
+</ul>
+</li>
+<li><a href="#org369beac">4.3.2. In RAM!</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#orge801b34">5. Tools to access scan DBs</a>
+<ul>
+<li><a href="#org061b8e4">5.1. sqlite3</a></li>
+<li><a href="#org0f94a04">5.2. Shell and sqlite3</a></li>
+<li><a href="#orgaebd1de">5.3. Shell, org-mode file, and sqlite3 (with a bit of ruby)</a></li>
+<li><a href="#orgeea7ec7">5.4. R and dplyr</a></li>
+<li><a href="#org69ba559">5.5. R and RSQLite</a></li>
+<li><a href="#orgc0aad4f">5.6. Emacs and org-mode</a></li>
 </ul>
 </li>
 <li><a href="#testing">6. Testing</a>
 <ul>
-<li><a href="#org911e6c8">6.1. <code>test1</code></a>
+<li><a href="#org77b593f">6.1. <code>test1</code></a>
 <ul>
-<li><a href="#orgc4d1a1b">6.1.1. Create the directory structure</a></li>
-<li><a href="#org32c8588">6.1.2. Scan the directory structure</a></li>
+<li><a href="#org8c5d960">6.1.1. Create the directory structure</a></li>
+<li><a href="#org7aa2508">6.1.2. Scan the directory structure</a></li>
 </ul>
 </li>
-<li><a href="#org893ea96">6.2. <code>test2</code></a>
+<li><a href="#org8026573">6.2. <code>test2</code></a>
 <ul>
-<li><a href="#org50535de">6.2.1. Create the directory structure</a></li>
-<li><a href="#orge6a3fb5">6.2.2. Scan the directory structure</a></li>
-<li><a href="#org0497daf">6.2.3. Test query of <code>annofsobj</code></a></li>
-<li><a href="#org164c41c">6.2.4. Test query of <code>fqpn</code></a></li>
+<li><a href="#org76edf66">6.2.1. Create the directory structure</a></li>
+<li><a href="#orga6cab31">6.2.2. Scan the directory structure</a></li>
+<li><a href="#orgc6f95e2">6.2.3. Test query of <code>annofsobj</code></a></li>
+<li><a href="#org2f9ec3c">6.2.4. Test query of <code>fqpn</code></a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org3abbb19">7. Handy shell things</a>
+<li><a href="#orgeb3407c">7. Handy shell things</a>
 <ul>
-<li><a href="#orgbc9dc49">7.1. dircsum</a>
+<li><a href="#orge4d5eff">7.1. dircsum</a>
 <ul>
-<li><a href="#org42891b2">7.1.1. Biggest 20 files in last scan</a></li>
-<li><a href="#orgc19f06c">7.1.2. File size stats</a></li>
-<li><a href="#org5786fae">7.1.3. File size stats by extention</a></li>
+<li><a href="#orgac7b3fb">7.1.1. Biggest 20 files in last scan</a></li>
+<li><a href="#org2d94c7a">7.1.2. File size stats</a></li>
+<li><a href="#org5cfee8e">7.1.3. File size stats by extention</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org2bf3d8e">8. Platform specific install notes</a>
+<li><a href="#orgdac2b9f">8. Platform specific install notes</a>
 <ul>
-<li><a href="#org01c0cd7">8.1. MSYS2 ruby on Windows</a></li>
-<li><a href="#orgf641908">8.2. On Debian (last tested on 9.6)</a></li>
+<li><a href="#org6b1e49a">8.1. MSYS2 ruby on Windows</a></li>
+<li><a href="#orge0ce507">8.2. On Debian (last tested on 9.6)</a></li>
 </ul>
 </li>
-<li><a href="#org3425ce4">9. File Extentions</a>
+<li><a href="#org4587be8">9. File Extentions</a>
 <ul>
-<li><a href="#org9c9661f">9.1. Some extensions</a></li>
-<li><a href="#org6fd73ca">9.2. Some wrapper extentions</a></li>
+<li><a href="#org5e10918">9.1. Some extensions</a></li>
+<li><a href="#org44e6670">9.2. Some wrapper extentions</a></li>
 </ul>
 </li>
-<li><a href="#org3c9f844">10. EOF</a></li>
+<li><a href="#org9ae1afe">10. EOF</a></li>
 </ul>
 </div>
 </div>
 
 <div id="outline-container-intro" class="outline-2">
-<h2 id="intro"><span class="section-number-2">1</span> Introduction</h2>
+<h2 id="intro"><span class="section-number-2">1.</span> Introduction</h2>
 <div class="outline-text-2" id="text-intro">
 <p>
 These tools provide a way to collect file-system metadata, store that metadata into an SQL database, and then conveniently query that data or compare
@@ -499,12 +498,12 @@ file types stored on file servers.  For me the more useful application is found 
 </div>
 
 <div id="outline-container-scripts" class="outline-2">
-<h2 id="scripts"><span class="section-number-2">2</span> The scripts</h2>
+<h2 id="scripts"><span class="section-number-2">2.</span> The scripts</h2>
 <div class="outline-text-2" id="text-scripts">
 </div>
 
 <div id="outline-container-script-dcsumNew" class="outline-3">
-<h3 id="script-dcsumNew"><span class="section-number-3">2.1</span> <code>dcsumNew.rb</code></h3>
+<h3 id="script-dcsumNew"><span class="section-number-3">2.1.</span> <code>dcsumNew.rb</code></h3>
 <div class="outline-text-3" id="text-script-dcsumNew">
 <p>
 Create a new checksum DB
@@ -606,7 +605,7 @@ containing various file meta data.
 </div>
 
 <div id="outline-container-script-dcsumCmpDB" class="outline-3">
-<h3 id="script-dcsumCmpDB"><span class="section-number-3">2.2</span> <code>dcsumCmpDB.rb</code></h3>
+<h3 id="script-dcsumCmpDB"><span class="section-number-3">2.2.</span> <code>dcsumCmpDB.rb</code></h3>
 <div class="outline-text-3" id="text-script-dcsumCmpDB">
 <p>
 Compare two checksum DBs.  This script uses a DB query to do the report, and thus the script provides a useful
@@ -645,7 +644,7 @@ Read two scan databases, and produce a file difference report.
 </div>
 
 <div id="outline-container-script-dcsumCmp" class="outline-3">
-<h3 id="script-dcsumCmp"><span class="section-number-3">2.3</span> <code>dcsumCmp.rb</code></h3>
+<h3 id="script-dcsumCmp"><span class="section-number-3">2.3.</span> <code>dcsumCmp.rb</code></h3>
 <div class="outline-text-3" id="text-script-dcsumCmp">
 <p>
 Compare two checksum DBs.  This script takes a more "hands on" approach.  It pulls all the data from the DBs into internal data structures, and then produces
@@ -807,7 +806,7 @@ Examples:
 </div>
 
 <div id="outline-container-script-applyOrgBlockSQL" class="outline-3">
-<h3 id="script-applyOrgBlockSQL"><span class="section-number-3">2.4</span> <code>applyOrgBlockSQL.rb</code></h3>
+<h3 id="script-applyOrgBlockSQL"><span class="section-number-3">2.4.</span> <code>applyOrgBlockSQL.rb</code></h3>
 <div class="outline-text-3" id="text-script-applyOrgBlockSQL">
 <p>
 Apply a code block from this file to a DB.
@@ -840,7 +839,7 @@ Use: applyOrgBlockSQL.rb name_of_db name_of_block [name_of_org_file]
 </div>
 
 <div id="outline-container-math" class="outline-2">
-<h2 id="math"><span class="section-number-2">3</span> A Little Theory</h2>
+<h2 id="math"><span class="section-number-2">3.</span> A Little Theory</h2>
 <div class="outline-text-2" id="text-math">
 <p>
 Before we delve into how to work with the DB it is worth spending some time on the theory behind the DB's orginization.  The RDBMS isn't terrably well suited
@@ -849,7 +848,7 @@ to manage heirarchical data; however, it <b>is</b> more than capable of doing so
 </div>
 
 <div id="outline-container-math-def" class="outline-3">
-<h3 id="math-def"><span class="section-number-3">3.1</span> Definitions</h3>
+<h3 id="math-def"><span class="section-number-3">3.1.</span> Definitions</h3>
 <div class="outline-text-3" id="text-math-def">
 <p>
 Let \(\mathcal{O}\) be the set of objects (files &amp; directories in our application), and \(N=\vert\mathcal{O}\vert\) be the number of objects.  For
@@ -913,8 +912,8 @@ Let \(\mathcal{O}\) be the set of objects (files &amp; directories in our applic
 </div>
 </div>
 
-<div id="outline-container-org32cd294" class="outline-3">
-<h3 id="org32cd294"><span class="section-number-3">3.2</span> An Example</h3>
+<div id="outline-container-orgd25e537" class="outline-3">
+<h3 id="orgd25e537"><span class="section-number-3">3.2.</span> An Example</h3>
 <div class="outline-text-3" id="text-3-2">
 <p>
 Throughout this document, the directory structure described here is used as an example.  In structure is illustrated below in the finest ascii-art tradition.
@@ -922,7 +921,7 @@ The columns of numbers represent the values for the variables defined above, and
 corresponds to \(b_J\).
 </p>
 
-<pre class="example" id="org1c71b93">
+<pre class="example" id="org91f2446">
 .                    Arranged Preorder Traversal                  Arranged Depth First                          .   
 .                                J D L R B P C                               J D L R B P C                      .
 .                    r           0 0 0 F 7 - 3                         r     0 0 0 F 7 - 3                      .
@@ -942,8 +941,8 @@ corresponds to \(b_J\).
 </div>
 </div>
 
-<div id="outline-container-org8a0cb82" class="outline-3">
-<h3 id="org8a0cb82"><span class="section-number-3">3.3</span> Formulas</h3>
+<div id="outline-container-orgbc54b85" class="outline-3">
+<h3 id="orgbc54b85"><span class="section-number-3">3.3.</span> Formulas</h3>
 <div class="outline-text-3" id="text-3-3">
 <p>
 The most direct formulas only involve simple arithmetic, and are summarized below.
@@ -1064,7 +1063,7 @@ derive the remaining values.  Also note that we can't get away with less than st
 </div>
 
 <div id="outline-container-db-schema" class="outline-3">
-<h3 id="db-schema"><span class="section-number-3">3.4</span> The DB schema</h3>
+<h3 id="db-schema"><span class="section-number-3">3.4.</span> The DB schema</h3>
 <div class="outline-text-3" id="text-db-schema">
 <p>
 All of this theory leads us to a concrete SQL implementation of the ideas.  The schema below is dumped directly from the <code>dcsumNew.rb</code> script given the
@@ -1081,15 +1080,15 @@ All of this theory leads us to a concrete SQL implementation of the ideas.  The 
 </div>
 
 <div class="org-src-container">
-<pre class="src src-sql"><span style="color: #ff7f24;">-- =======================================================================================================================</span>
-<span style="color: #ff7f24;">-- Schema as of Thu, May 6, 2021 8:29:28 PM</span>
-<span style="color: #ff7f24;">-- =======================================================================================================================</span>
-   <span style="color: #ff7f24;">-- Raw UNIX groups table</span>
+<pre class="src src-sql"><span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">=======================================================================================================================</span>
+<span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Schema as of Thu, May 6, 2021 8:29:28 PM</span>
+<span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">=======================================================================================================================</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Raw UNIX groups table</span>
    <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> <span style="color: #00fa9a; font-weight: bold;">rgroups</span> (groupid <span style="color: #63b8ff;">INTEGER</span>,
                         gname   TEXT
                        );
 
-   <span style="color: #ff7f24;">-- Raw UNIX passwd table</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Raw UNIX passwd table</span>
    <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> <span style="color: #00fa9a; font-weight: bold;">rusers</span> (userid   <span style="color: #63b8ff;">INTEGER</span>,
                        uname    TEXT,
                        primgid  <span style="color: #63b8ff;">INTEGER</span>,
@@ -1097,97 +1096,97 @@ All of this theory leads us to a concrete SQL implementation of the ideas.  The 
                        gecos    TEXT
                       );
 
-   <span style="color: #ff7f24;">-- UNIX group memberships (including primary memberships)</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">UNIX group memberships (including primary memberships)</span>
    <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> <span style="color: #00fa9a; font-weight: bold;">groupmembers</span> (groupid <span style="color: #63b8ff;">INTEGER</span>,
                               userid  <span style="color: #63b8ff;">INTEGER</span>
                              );
 
-   <span style="color: #ff7f24;">-- Various bits of meta data about the scan</span>
-   <span style="color: #ff7f24;">--  |-------------------------+--------------------+-------------------------------------------------------------|</span>
-   <span style="color: #ff7f24;">--  | Key                     | Type               | Description                                                 |</span>
-   <span style="color: #ff7f24;">--  |-------------------------+--------------------+-------------------------------------------------------------|</span>
-   <span style="color: #ff7f24;">--  | BLKnFSOBJ               | BOOLEAN            | Are the blocks and blocksz columns in fsobj table?          |</span>
-   <span style="color: #ff7f24;">--  | DEVnFSOBJ               | BOOLEAN            | Is the device column in the in fsobj table?                 |</span>
-   <span style="color: #ff7f24;">--  | EXTnFSOBJ               | BOOLEAN            | Is file extension included as a field in fsobj table?       |</span>
-   <span style="color: #ff7f24;">--  | csum                    | STRING             | The checksum we are using                                   |</span>
-   <span style="color: #ff7f24;">--  |-------------------------+--------------------+-------------------------------------------------------------|</span>
-   <span style="color: #ff7f24;">--  | checksumAvoided         | INTEGER            | Number of checksums avoided in in -u or -U mode             |</span>
-   <span style="color: #ff7f24;">--  | objCnt                  | INTEGER            | Number of objects scanned                                   |</span>
-   <span style="color: #ff7f24;">--  | cntRegFile              | INTEGER            | Number of regular files scanned                             |</span>
-   <span style="color: #ff7f24;">--  | cntDirectories          | INTEGER            | Number of directories scanned                               |</span>
-   <span style="color: #ff7f24;">--  | cntSymLinks             | INTEGER            | Number of symbolic links scanned                            |</span>
-   <span style="color: #ff7f24;">--  | cntFunnyFiles           | INTEGER            | objCnt-(cntRegFile+cntDirectories+cntSymLinks)              |</span>
-   <span style="color: #ff7f24;">--  | cntCsumByte             | INTEGER            | sum(size_of_file) for all checksumed files                  |</span>
-   <span style="color: #ff7f24;">--  | cntCsumByte1KC          | INTEGER            | sum(min(size_of_file, 1024) for all checksumed files        |</span>
-   <span style="color: #ff7f24;">--  | cntCsumFiles            | INTEGER            | Number of files checksumed                                  |</span>
-   <span style="color: #ff7f24;">--  |-------------------------+--------------------+-------------------------------------------------------------|</span>
-   <span style="color: #ff7f24;">--  | engine version          | STRING             | YYYY-MM-DD format date for version of scanner               |</span>
-   <span style="color: #ff7f24;">--  | engine                  | STRING             | Indicates engine platform: ruby, c++                        |</span>
-   <span style="color: #ff7f24;">--  | dircsumMode             | BOOLEAN            | Did the scan run in dircsumMode (-U)                        |</span>
-   <span style="color: #ff7f24;">--  | outDBfile               | STRING             | Name of output DB file (-o)                                 |</span>
-   <span style="color: #ff7f24;">--  | oldFileFile             | STRING             | Name of old DB file (-u)                                    |</span>
-   <span style="color: #ff7f24;">--  | oldFileSize             | BOOLEAN            | File size used for -u and -U mode                           |</span>
-   <span style="color: #ff7f24;">--  | oldFileMtime            | BOOLEAN            | File mtime used for -u and -U mode                          |</span>
-   <span style="color: #ff7f24;">--  | oldFileCtime            | BOOLEAN            | File ctime used for -u and -U mode                          |</span>
-   <span style="color: #ff7f24;">--  | printProgress           | INTEGER            | Amount of progress information printed at scan time         |</span>
-   <span style="color: #ff7f24;">--  | dirToScan               | STRING             | The directory given on command line to scan                 |</span>
-   <span style="color: #ff7f24;">--  | dirToScanPfx            | STRING             | The dirname of dirToScan                                    |</span>
-   <span style="color: #ff7f24;">--  | dirToScanNam            | STRING             | The basename of dirToScan                                   |</span>
-   <span style="color: #ff7f24;">--  |-------------------------+--------------------+-------------------------------------------------------------|</span>
-   <span style="color: #ff7f24;">--  | dumpStart:users         | POSIX Time Integer | Start time for user table dump                              |</span>
-   <span style="color: #ff7f24;">--  | dumpFinish:rusers       | POSIX Time Integer | End time for user table dump                                |</span>
-   <span style="color: #ff7f24;">--  | dumpStart:rgroups       | POSIX Time Integer | Start time for group table dump                             |</span>
-   <span style="color: #ff7f24;">--  | dumpFinish:rgroups      | POSIX Time Integer | End time for group table dump                               |</span>
-   <span style="color: #ff7f24;">--  | scanStart               | POSIX Time Integer | Start time for directory scan                               |</span>
-   <span style="color: #ff7f24;">--  | scanFinish              | POSIX Time Integer | End time for directory scan                                 |</span>
-   <span style="color: #ff7f24;">--  | dumpAndCsumStart:files  | POSIX Time Integer | Start time for file checksums and file data dump            |</span>
-   <span style="color: #ff7f24;">--  | dumpAndCsumFinish:files | POSIX Time Integer | End time for file checksums and file data dump              |</span>
-   <span style="color: #ff7f24;">--  | processStart            | POSIX Time Integer | Start time for process                                      |</span>
-   <span style="color: #ff7f24;">--  | processEnd              | POSIX Time Integer | End time for process                                        |</span>
-   <span style="color: #ff7f24;">--  |-------------------------+--------------------+-------------------------------------------------------------|</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Various bits of meta data about the scan</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">|-------------------------+--------------------+-------------------------------------------------------------|</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| Key                     | Type               | Description                                                 |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">|-------------------------+--------------------+-------------------------------------------------------------|</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| BLKnFSOBJ               | BOOLEAN            | Are the blocks and blocksz columns in fsobj table?          |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| DEVnFSOBJ               | BOOLEAN            | Is the device column in the in fsobj table?                 |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| EXTnFSOBJ               | BOOLEAN            | Is file extension included as a field in fsobj table?       |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| csum                    | STRING             | The checksum we are using                                   |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">|-------------------------+--------------------+-------------------------------------------------------------|</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| checksumAvoided         | INTEGER            | Number of checksums avoided in in -u or -U mode             |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| objCnt                  | INTEGER            | Number of objects scanned                                   |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| cntRegFile              | INTEGER            | Number of regular files scanned                             |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| cntDirectories          | INTEGER            | Number of directories scanned                               |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| cntSymLinks             | INTEGER            | Number of symbolic links scanned                            |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| cntFunnyFiles           | INTEGER            | objCnt-(cntRegFile+cntDirectories+cntSymLinks)              |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| cntCsumByte             | INTEGER            | sum(size_of_file) for all checksumed files                  |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| cntCsumByte1KC          | INTEGER            | sum(min(size_of_file, 1024) for all checksumed files        |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| cntCsumFiles            | INTEGER            | Number of files checksumed                                  |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">|-------------------------+--------------------+-------------------------------------------------------------|</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| engine version          | STRING             | YYYY-MM-DD format date for version of scanner               |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| engine                  | STRING             | Indicates engine platform: ruby, c++                        |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| dircsumMode             | BOOLEAN            | Did the scan run in dircsumMode (-U)                        |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| outDBfile               | STRING             | Name of output DB file (-o)                                 |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| oldFileFile             | STRING             | Name of old DB file (-u)                                    |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| oldFileSize             | BOOLEAN            | File size used for -u and -U mode                           |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| oldFileMtime            | BOOLEAN            | File mtime used for -u and -U mode                          |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| oldFileCtime            | BOOLEAN            | File ctime used for -u and -U mode                          |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| printProgress           | INTEGER            | Amount of progress information printed at scan time         |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| dirToScan               | STRING             | The directory given on command line to scan                 |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| dirToScanPfx            | STRING             | The dirname of dirToScan                                    |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| dirToScanNam            | STRING             | The basename of dirToScan                                   |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">|-------------------------+--------------------+-------------------------------------------------------------|</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| dumpStart:users         | POSIX Time Integer | Start time for user table dump                              |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| dumpFinish:rusers       | POSIX Time Integer | End time for user table dump                                |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| dumpStart:rgroups       | POSIX Time Integer | Start time for group table dump                             |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| dumpFinish:rgroups      | POSIX Time Integer | End time for group table dump                               |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| scanStart               | POSIX Time Integer | Start time for directory scan                               |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| scanFinish              | POSIX Time Integer | End time for directory scan                                 |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| dumpAndCsumStart:files  | POSIX Time Integer | Start time for file checksums and file data dump            |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| dumpAndCsumFinish:files | POSIX Time Integer | End time for file checksums and file data dump              |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| processStart            | POSIX Time Integer | Start time for process                                      |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">| processEnd              | POSIX Time Integer | End time for process                                        |</span>
+   <span style="color: #ffa500;">--  </span><span style="color: #ff7f24;">|-------------------------+--------------------+-------------------------------------------------------------|</span>
    <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> <span style="color: #00fa9a; font-weight: bold;">meta</span> (mkey   TEXT,
                       mvalue TEXT
                      );
 
-   <span style="color: #00ffff;">INSERT</span> <span style="color: #00ffff;">INTO</span> meta <span style="color: #00ffff;">VALUES</span> (<span style="color: #fa8072;">'BLKnFSOBJ'</span>,   <span style="color: #fa8072;">'true'</span> );  <span style="color: #ff7f24;">--BLKnFSOBJ--</span>
+   <span style="color: #00ffff;">INSERT</span> <span style="color: #00ffff;">INTO</span> meta <span style="color: #00ffff;">VALUES</span> (<span style="color: #fa8072;">'BLKnFSOBJ'</span>,   <span style="color: #fa8072;">'true'</span> );  <span style="color: #ffa500;">--</span><span style="color: #ff7f24;">BLKnFSOBJ--</span>
 
 
 
-   <span style="color: #00ffff;">INSERT</span> <span style="color: #00ffff;">INTO</span> meta <span style="color: #00ffff;">VALUES</span> (<span style="color: #fa8072;">'DEVnFSOBJ'</span>,   <span style="color: #fa8072;">'true'</span> );  <span style="color: #ff7f24;">--DEVnFSOBJ--</span>
+   <span style="color: #00ffff;">INSERT</span> <span style="color: #00ffff;">INTO</span> meta <span style="color: #00ffff;">VALUES</span> (<span style="color: #fa8072;">'DEVnFSOBJ'</span>,   <span style="color: #fa8072;">'true'</span> );  <span style="color: #ffa500;">--</span><span style="color: #ff7f24;">DEVnFSOBJ--</span>
 
 
 
-   <span style="color: #00ffff;">INSERT</span> <span style="color: #00ffff;">INTO</span> meta <span style="color: #00ffff;">VALUES</span> (<span style="color: #fa8072;">'EXTnFSOBJ'</span>,   <span style="color: #fa8072;">'true'</span> );  <span style="color: #ff7f24;">--EXTnFSOBJ--</span>
+   <span style="color: #00ffff;">INSERT</span> <span style="color: #00ffff;">INTO</span> meta <span style="color: #00ffff;">VALUES</span> (<span style="color: #fa8072;">'EXTnFSOBJ'</span>,   <span style="color: #fa8072;">'true'</span> );  <span style="color: #ffa500;">--</span><span style="color: #ff7f24;">EXTnFSOBJ--</span>
 
-   <span style="color: #ff7f24;">-- Data for each file system object found in the scan</span>
-   <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> <span style="color: #00fa9a; font-weight: bold;">fsobj</span> (id       <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ff7f24;">-- unique ID in [0, count(*)-1].  Might not be preorder traversal index</span>
-                       pid      <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ff7f24;">-- ID of parent or NILL for root object</span>
-                       lft      <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ff7f24;">-- left hierarchy bower.                    </span>
-                       rgt      <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ff7f24;">-- right hierarchy bower.                   </span>
-                       ddeep    <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ff7f24;">-- depth in hierarchy.                      </span>
-                       userid   <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ff7f24;">-- non-negative integer.  May be missing from rusers.userid!</span>
-                       groupid  <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ff7f24;">-- non-negative integer.  May be missing from rgroups.groupid!</span>
-                       deviceid <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ff7f24;">-- integer device number.                   --DEVnFSOBJ--</span>
-                       ftype    TEXT,    <span style="color: #ff7f24;">-- Single char for file type.  See: table ftype2lab</span>
-                       fmodes   <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ff7f24;">-- non-negative UNIX mode number. May be platform specific</span>
-                       fname    TEXT,    <span style="color: #ff7f24;">-- file-name.  Hopefully UTF-8, but perhaps now.  No zeros or /.</span>
-                       fext     TEXT,    <span style="color: #ff7f24;">-- Normalized file extension                --EXTnFSOBJ--</span>
-                       bytes    <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ff7f24;">-- non-negative integer</span>
-                       blocks   <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ff7f24;">-- non-negative integer                     --BLKnFSOBJ--</span>
-                       blocksz  <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ff7f24;">-- non-negative integer                     --BLKnFSOBJ--</span>
-                       atime    <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ff7f24;">-- UNIX POSIX date integer</span>
-                       mtime    <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ff7f24;">-- UNIX POSIX date integer</span>
-                       ctime    <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ff7f24;">-- UNIX POSIX date integer</span>
-                       csum     TEXT     <span style="color: #ff7f24;">-- Hex encoded checksum, empty string, symlink target, or dir relpn</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Data for each file system object found in the scan</span>
+   <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> <span style="color: #00fa9a; font-weight: bold;">fsobj</span> (id       <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">unique ID in [0, count(*)-1].  Might not be preorder traversal index</span>
+                       pid      <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">ID of parent or NILL for root object</span>
+                       lft      <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">left hierarchy bower.                    </span>
+                       rgt      <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">right hierarchy bower.                   </span>
+                       ddeep    <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">depth in hierarchy.                      </span>
+                       userid   <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">non-negative integer.  May be missing from rusers.userid!</span>
+                       groupid  <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">non-negative integer.  May be missing from rgroups.groupid!</span>
+                       deviceid <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">integer device number.                   --DEVnFSOBJ--</span>
+                       ftype    TEXT,    <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Single char for file type.  See: table ftype2lab</span>
+                       fmodes   <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">non-negative UNIX mode number. May be platform specific</span>
+                       fname    TEXT,    <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">file-name.  Hopefully UTF-8, but perhaps now.  No zeros or /.</span>
+                       fext     TEXT,    <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Normalized file extension                --EXTnFSOBJ--</span>
+                       bytes    <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">non-negative integer</span>
+                       blocks   <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">non-negative integer                     --BLKnFSOBJ--</span>
+                       blocksz  <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">non-negative integer                     --BLKnFSOBJ--</span>
+                       atime    <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">UNIX POSIX date integer</span>
+                       mtime    <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">UNIX POSIX date integer</span>
+                       ctime    <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">UNIX POSIX date integer</span>
+                       csum     TEXT     <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Hex encoded checksum, empty string, symlink target, or dir relpn</span>
                       );
 
-   <span style="color: #ff7f24;">-- Text search index: words</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Text search index: words</span>
    <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> <span style="color: #00fa9a; font-weight: bold;">wordidx</span> (word    TEXT,
                          id      <span style="color: #63b8ff;">INTEGER</span>,
                          line    <span style="color: #63b8ff;">INTEGER</span>,
                          offset  <span style="color: #63b8ff;">INTEGER</span>);
 
-   <span style="color: #ff7f24;">-- Annotate wordidx with fqpn</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Annotate wordidx with fqpn</span>
    <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">VIEW</span> <span style="color: #00fa9a; font-weight: bold;">wordidx_fq</span> <span style="color: #00ffff;">AS</span>
      <span style="color: #00ffff;">SELECT</span> wordidx.word     <span style="color: #00ffff;">AS</span> word,
             wordidx.line     <span style="color: #00ffff;">AS</span> line,
@@ -1198,11 +1197,11 @@ All of this theory leads us to a concrete SQL implementation of the ideas.  The 
        <span style="color: #00ffff;">JOIN</span> annofsobjfq
          <span style="color: #00ffff;">ON</span> annofsobjfq.id = wordidx.id;
 
-   <span style="color: #ff7f24;">-- Scan Error Log</span>
-   <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> <span style="color: #00fa9a; font-weight: bold;">serrors</span> (id       <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ff7f24;">-- May be NULL if we don't know the object ID</span>
-                         emessage TEXT);   <span style="color: #ff7f24;">-- Text of the error message.</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Scan Error Log</span>
+   <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> <span style="color: #00fa9a; font-weight: bold;">serrors</span> (id       <span style="color: #63b8ff;">INTEGER</span>, <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">May be NULL if we don't know the object ID</span>
+                         emessage TEXT);   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Text of the error message.</span>
 
-   <span style="color: #ff7f24;">-- View of rusers with UNIQUE userid</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">View of rusers with UNIQUE userid</span>
    <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">VIEW</span> <span style="color: #00fa9a; font-weight: bold;">users</span> <span style="color: #00ffff;">AS</span>
      <span style="color: #00ffff;">SELECT</span> rusers.userid,
             rusers.uname,
@@ -1217,7 +1216,7 @@ All of this theory leads us to a concrete SQL implementation of the ideas.  The 
          <span style="color: #00ffff;">ON</span> tmp1.mrid   = rusers.rowid   <span style="color: #00ffff;">AND</span>
             tmp1.userid = rusers.userid;
 
-   <span style="color: #ff7f24;">-- View of rgroups with UNIQUE groupid</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">View of rgroups with UNIQUE groupid</span>
    <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">VIEW</span> <span style="color: #00fa9a; font-weight: bold;">groups</span> <span style="color: #00ffff;">AS</span>
      <span style="color: #00ffff;">SELECT</span> rgroups.groupid,
             rgroups.gname
@@ -1229,9 +1228,9 @@ All of this theory leads us to a concrete SQL implementation of the ideas.  The 
          <span style="color: #00ffff;">ON</span> tmp1.mrid    = rgroups.rowid    <span style="color: #00ffff;">AND</span>
             tmp1.groupid = rgroups.groupid;
 
-   <span style="color: #ff7f24;">-- Handy view that makes some queries less difficult.  Replace with a real table</span>
-   <span style="color: #ff7f24;">-- if performance is an issue.  Note the path of the root of the scan (the one</span>
-   <span style="color: #ff7f24;">-- with id==pid, in this table will be fqpn)</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Handy view that makes some queries less difficult.  Replace with a real table</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">if performance is an issue.  Note the path of the root of the scan (the one</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">with id==pid, in this table will be fqpn)</span>
    <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">VIEW</span> <span style="color: #00fa9a; font-weight: bold;">dirs</span> <span style="color: #00ffff;">AS</span>
      <span style="color: #00ffff;">SELECT</span> id,
             lft,          
@@ -1242,7 +1241,7 @@ All of this theory leads us to a concrete SQL implementation of the ideas.  The 
        <span style="color: #00ffff;">FROM</span> fsobj
        <span style="color: #00ffff;">WHERE</span> ftype = <span style="color: #fa8072;">'d'</span>;
 
-   <span style="color: #ff7f24;">-- Just like dirs, but with fqpn instead of relpn.  Note that this</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Just like dirs, but with fqpn instead of relpn.  Note that this</span>
    <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">VIEW</span> <span style="color: #00fa9a; font-weight: bold;">dirsfq</span> <span style="color: #00ffff;">AS</span>
      <span style="color: #00ffff;">SELECT</span> id,
             lft,                                                              
@@ -1253,9 +1252,9 @@ All of this theory leads us to a concrete SQL implementation of the ideas.  The 
        <span style="color: #00ffff;">FROM</span> fsobj
        <span style="color: #00ffff;">WHERE</span> ftype = <span style="color: #fa8072;">'d'</span>;
 
-   <span style="color: #ff7f24;">-- Handy "has it all table" that can be quite slow, but makes quick and dirty</span>
-   <span style="color: #ff7f24;">-- queries very easy.  The atime, mtime, &amp; ctime are all timestamp objects.</span>
-   <span style="color: #ff7f24;">-- Joined in are the relpn, uname, and gname.</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Handy "has it all table" that can be quite slow, but makes quick and dirty</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">queries very easy.  The atime, mtime, &amp; ctime are all timestamp objects.</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Joined in are the relpn, uname, and gname.</span>
    <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">VIEW</span> <span style="color: #00fa9a; font-weight: bold;">annofsobj</span> <span style="color: #00ffff;">AS</span>
      <span style="color: #00ffff;">SELECT</span> fsobj.id                                         <span style="color: #00ffff;">AS</span> id,
             fsobj.pid                                        <span style="color: #00ffff;">AS</span> pid,
@@ -1264,14 +1263,14 @@ All of this theory leads us to a concrete SQL implementation of the ideas.  The 
             fsobj.ddeep                                      <span style="color: #00ffff;">AS</span> ddeep,    
             fsobj.userid                                     <span style="color: #00ffff;">AS</span> userid,
             fsobj.groupid                                    <span style="color: #00ffff;">AS</span> groupid,
-            fsobj.deviceid                                   <span style="color: #00ffff;">AS</span> deviceid, <span style="color: #ff7f24;">--DEVnFSOBJ--</span>
+            fsobj.deviceid                                   <span style="color: #00ffff;">AS</span> deviceid, <span style="color: #ffa500;">--</span><span style="color: #ff7f24;">DEVnFSOBJ--</span>
             fsobj.ftype                                      <span style="color: #00ffff;">AS</span> ftype,
             fsobj.fmodes                                     <span style="color: #00ffff;">AS</span> fmodes,
             fsobj.fname                                      <span style="color: #00ffff;">AS</span> fname,
-            fsobj.fext                                       <span style="color: #00ffff;">AS</span> fext,     <span style="color: #ff7f24;">--EXTnFSOBJ--</span>
+            fsobj.fext                                       <span style="color: #00ffff;">AS</span> fext,     <span style="color: #ffa500;">--</span><span style="color: #ff7f24;">EXTnFSOBJ--</span>
             fsobj.bytes                                      <span style="color: #00ffff;">AS</span> bytes,
-            fsobj.blocks                                     <span style="color: #00ffff;">AS</span> blocks,   <span style="color: #ff7f24;">--BLKnFSOBJ--</span>
-            fsobj.blocksz                                    <span style="color: #00ffff;">AS</span> blocksz,  <span style="color: #ff7f24;">--BLKnFSOBJ--</span>
+            fsobj.blocks                                     <span style="color: #00ffff;">AS</span> blocks,   <span style="color: #ffa500;">--</span><span style="color: #ff7f24;">BLKnFSOBJ--</span>
+            fsobj.blocksz                                    <span style="color: #00ffff;">AS</span> blocksz,  <span style="color: #ffa500;">--</span><span style="color: #ff7f24;">BLKnFSOBJ--</span>
             fsobj.atime                                      <span style="color: #00ffff;">AS</span> atime,
             fsobj.mtime                                      <span style="color: #00ffff;">AS</span> mtime,
             fsobj.ctime                                      <span style="color: #00ffff;">AS</span> ctime,
@@ -1293,16 +1292,16 @@ All of this theory leads us to a concrete SQL implementation of the ideas.  The 
        <span style="color: #00ffff;">LEFT</span> <span style="color: #00ffff;">JOIN</span> groups
          <span style="color: #00ffff;">ON</span> fsobj.groupid=groups.groupid;
 
-   <span style="color: #ff7f24;">-- Just like annofsobj, but with fqpn instead of relpn (relative path name)</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Just like annofsobj, but with fqpn instead of relpn (relative path name)</span>
    <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">VIEW</span> <span style="color: #00fa9a; font-weight: bold;">annofsobjfq</span> <span style="color: #00ffff;">AS</span>
      <span style="color: #00ffff;">SELECT</span> id, pid,
             lft, rgt, ddeep,                                                   
             userid, groupid,
-            deviceid,                                                          <span style="color: #ff7f24;">--DEVnFSOBJ--</span>
+            deviceid,                                                          <span style="color: #ffa500;">--</span><span style="color: #ff7f24;">DEVnFSOBJ--</span>
             ftype, fmodes, fname,
-            fext,                                                              <span style="color: #ff7f24;">--EXTnFSOBJ--</span>
+            fext,                                                              <span style="color: #ffa500;">--</span><span style="color: #ff7f24;">EXTnFSOBJ--</span>
             bytes,
-            blocks, blocksz,                                                   <span style="color: #ff7f24;">--BLKnFSOBJ--</span>
+            blocks, blocksz,                                                   <span style="color: #ffa500;">--</span><span style="color: #ff7f24;">BLKnFSOBJ--</span>
             atime, mtime, ctime, atimed,
             mtimed, ctimed, csum,
             (<span style="color: #00ffff;">SELECT</span> mvalue <span style="color: #00ffff;">FROM</span> meta <span style="color: #00ffff;">WHERE</span> mkey=<span style="color: #fa8072;">'dirToScan'</span>) ||                
@@ -1312,7 +1311,7 @@ All of this theory leads us to a concrete SQL implementation of the ideas.  The 
             uname, gname
        <span style="color: #00ffff;">FROM</span> annofsobj;
 
-   <span style="color: #ff7f24;">-- Add some handy values to the meta table</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Add some handy values to the meta table</span>
    <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">VIEW</span> <span style="color: #00fa9a; font-weight: bold;">annometa</span> <span style="color: #00ffff;">AS</span>
      <span style="color: #00ffff;">SELECT</span> mkey, mvalue <span style="color: #00ffff;">FROM</span> meta
      <span style="color: #00ffff;">UNION</span> <span style="color: #00ffff;">ALL</span>
@@ -1328,7 +1327,7 @@ All of this theory leads us to a concrete SQL implementation of the ideas.  The 
             ((<span style="color: #00ffff;">SELECT</span> mvalue <span style="color: #00ffff;">FROM</span> meta <span style="color: #00ffff;">WHERE</span> mkey = <span style="color: #fa8072;">'processEnd'</span>) -
              (<span style="color: #00ffff;">SELECT</span> mvalue <span style="color: #00ffff;">FROM</span> meta <span style="color: #00ffff;">WHERE</span> mkey = <span style="color: #fa8072;">'processStart'</span>))               <span style="color: #00ffff;">AS</span> mvalue;
 
-   <span style="color: #ff7f24;">-- Handy table for transforming single character ftype from fsobj into human readable strings for reports.</span>
+   <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Handy table for transforming single character ftype from fsobj into human readable strings for reports.</span>
    <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> <span style="color: #00fa9a; font-weight: bold;">ftype2lab</span> (ftype    TEXT,
                            ftypehr  TEXT);
    <span style="color: #00ffff;">INSERT</span> <span style="color: #00ffff;">INTO</span> ftype2lab <span style="color: #00ffff;">VALUES</span>(<span style="color: #fa8072;">'r'</span>, <span style="color: #fa8072;">'Regular File'</span>);
@@ -1339,27 +1338,27 @@ All of this theory leads us to a concrete SQL implementation of the ideas.  The 
    <span style="color: #00ffff;">INSERT</span> <span style="color: #00ffff;">INTO</span> ftype2lab <span style="color: #00ffff;">VALUES</span>(<span style="color: #fa8072;">'f'</span>, <span style="color: #fa8072;">'FIFO'</span>);
    <span style="color: #00ffff;">INSERT</span> <span style="color: #00ffff;">INTO</span> ftype2lab <span style="color: #00ffff;">VALUES</span>(<span style="color: #fa8072;">'s'</span>, <span style="color: #fa8072;">'Socket'</span>);
    <span style="color: #00ffff;">INSERT</span> <span style="color: #00ffff;">INTO</span> ftype2lab <span style="color: #00ffff;">VALUES</span>(<span style="color: #fa8072;">'u'</span>, <span style="color: #fa8072;">'Unknown Type'</span>);
-<span style="color: #ff7f24;">-- =======================================================================================================================</span>
+<span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">=======================================================================================================================</span>
 </pre>
 </div>
 </div>
 </div>
 </div>
 
-<div id="outline-container-orge150c87" class="outline-2">
-<h2 id="orge150c87"><span class="section-number-2">4</span> Example SQL Queries</h2>
+<div id="outline-container-org60e633a" class="outline-2">
+<h2 id="org60e633a"><span class="section-number-2">4.</span> Example SQL Queries</h2>
 <div class="outline-text-2" id="text-4">
 </div>
-<div id="outline-container-orgb61a07f" class="outline-3">
-<h3 id="orgb61a07f"><span class="section-number-3">4.1</span> Filesystem data</h3>
+<div id="outline-container-org7d4e9df" class="outline-3">
+<h3 id="org7d4e9df"><span class="section-number-3">4.1.</span> Filesystem data</h3>
 <div class="outline-text-3" id="text-4-1">
 </div>
-<div id="outline-container-org03eb7d7" class="outline-4">
-<h4 id="org03eb7d7"><span class="section-number-4">4.1.1</span> Selecting objects in a sub-tree or sub-directory</h4>
+<div id="outline-container-orgfbe2773" class="outline-4">
+<h4 id="orgfbe2773"><span class="section-number-4">4.1.1.</span> Selecting objects in a sub-tree or sub-directory</h4>
 <div class="outline-text-4" id="text-4-1-1">
 </div>
-<div id="outline-container-orgc0c7d26" class="outline-5">
-<h5 id="orgc0c7d26"><span class="section-number-5">4.1.1.1</span> Disocver the <code>lft</code> and <code>rgt</code> values for our path</h5>
+<div id="outline-container-org171d938" class="outline-5">
+<h5 id="org171d938"><span class="section-number-5">4.1.1.1.</span> Disocver the <code>lft</code> and <code>rgt</code> values for our path</h5>
 <div class="outline-text-5" id="text-4-1-1-1">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> id,
@@ -1413,8 +1412,8 @@ All of this theory leads us to a concrete SQL implementation of the ideas.  The 
 </div>
 </div>
 
-<div id="outline-container-orgce51e9c" class="outline-5">
-<h5 id="orgce51e9c"><span class="section-number-5">4.1.1.2</span> Find all roots of all subtrees containing object</h5>
+<div id="outline-container-org69dece1" class="outline-5">
+<h5 id="org69dece1"><span class="section-number-5">4.1.1.2.</span> Find all roots of all subtrees containing object</h5>
 <div class="outline-text-5" id="text-4-1-1-2">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> id,
@@ -1425,8 +1424,8 @@ All of this theory leads us to a concrete SQL implementation of the ideas.  The 
        fname,
        csum
   <span style="color: #00ffff;">FROM</span> fsobj
-  <span style="color: #00ffff;">WHERE</span> lft &lt; 1  <span style="color: #00ffff;">AND</span> <span style="color: #ff7f24;">-- lft of object we care about</span>
-        rgt &gt; 8     <span style="color: #ff7f24;">-- rgt of object we care about</span>
+  <span style="color: #00ffff;">WHERE</span> lft &lt; 1  <span style="color: #00ffff;">AND</span> <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">lft of object we care about</span>
+        rgt &gt; 8     <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">rgt of object we care about</span>
   <span style="color: #00ffff;">ORDER</span> <span style="color: #00ffff;">BY</span> ddeep;
 </pre>
 </div>
@@ -1475,8 +1474,8 @@ All of this theory leads us to a concrete SQL implementation of the ideas.  The 
 </div>
 </div>
 
-<div id="outline-container-orga0fdd3f" class="outline-5">
-<h5 id="orga0fdd3f"><span class="section-number-5">4.1.1.3</span> Select objects in this sub-tree</h5>
+<div id="outline-container-org9dfabde" class="outline-5">
+<h5 id="org9dfabde"><span class="section-number-5">4.1.1.3.</span> Select objects in this sub-tree</h5>
 <div class="outline-text-5" id="text-4-1-1-3">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> id,
@@ -1570,8 +1569,8 @@ Note the equals sign in the <code>WHERE</code> clause.  With the equality the re
 </div>
 </div>
 
-<div id="outline-container-orgc11d467" class="outline-5">
-<h5 id="orgc11d467"><span class="section-number-5">4.1.1.4</span> Select objects directly in this sub-directory</h5>
+<div id="outline-container-org2dcb7ac" class="outline-5">
+<h5 id="org2dcb7ac"><span class="section-number-5">4.1.1.4.</span> Select objects directly in this sub-directory</h5>
 <div class="outline-text-5" id="text-4-1-1-4">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> id,
@@ -1582,7 +1581,7 @@ Note the equals sign in the <code>WHERE</code> clause.  With the equality the re
        fname,
        csum
   <span style="color: #00ffff;">FROM</span> fsobj 
-  <span style="color: #00ffff;">WHERE</span> pid == 1; <span style="color: #ff7f24;">-- the id of the object we care about</span>
+  <span style="color: #00ffff;">WHERE</span> pid == 1; <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">the id of the object we care about</span>
 </pre>
 </div>
 
@@ -1641,15 +1640,15 @@ Note the equals sign in the <code>WHERE</code> clause.  With the equality the re
 </div>
 </div>
 
-<div id="outline-container-org0c3b84a" class="outline-4">
-<h4 id="org0c3b84a"><span class="section-number-4">4.1.2</span> Listing relative path names</h4>
+<div id="outline-container-orgce78a3c" class="outline-4">
+<h4 id="orgce78a3c"><span class="section-number-4">4.1.2.</span> Listing relative path names</h4>
 <div class="outline-text-4" id="text-4-1-2">
 </div>
-<div id="outline-container-orgcc224e6" class="outline-5">
-<h5 id="orgcc224e6"><span class="section-number-5">4.1.2.1</span> Includeing the root of the scan</h5>
+<div id="outline-container-org0ef5703" class="outline-5">
+<h5 id="org0ef5703"><span class="section-number-5">4.1.2.1.</span> Includeing the root of the scan</h5>
 <div class="outline-text-5" id="text-4-1-2-1">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="org7f701a0"><span style="color: #00ffff;">SELECT</span> fsobj.id,
+<pre class="src src-sqlite" id="orgb123a24"><span style="color: #00ffff;">SELECT</span> fsobj.id,
        fsobj.fname,
        <span style="color: #00ffff;">CASE</span> <span style="color: #00ffff;">WHEN</span> fsobj.id = fsobj.pid <span style="color: #00ffff;">THEN</span> <span style="color: #fa8072;">'/'</span>
                                       <span style="color: #00ffff;">ELSE</span> dirs.relpn||<span style="color: #fa8072;">'/'</span>||fsobj.fname 
@@ -1730,11 +1729,11 @@ Note the equals sign in the <code>WHERE</code> clause.  With the equality the re
 </div>
 </div>
 
-<div id="outline-container-org2791c4c" class="outline-5">
-<h5 id="org2791c4c"><span class="section-number-5">4.1.2.2</span> Excludeing the root of the scan</h5>
+<div id="outline-container-orgd7aa8b2" class="outline-5">
+<h5 id="orgd7aa8b2"><span class="section-number-5">4.1.2.2.</span> Excludeing the root of the scan</h5>
 <div class="outline-text-5" id="text-4-1-2-2">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="org94dbb53"><span style="color: #00ffff;">SELECT</span> fsobj.id,
+<pre class="src src-sqlite" id="org403d10b"><span style="color: #00ffff;">SELECT</span> fsobj.id,
        fsobj.fname,
        dirs.relpn||<span style="color: #fa8072;">'/'</span>||fsobj.fname <span style="color: #00ffff;">AS</span> relpn
   <span style="color: #00ffff;">FROM</span> fsobj
@@ -1809,11 +1808,11 @@ Note the equals sign in the <code>WHERE</code> clause.  With the equality the re
 </div>
 </div>
 
-<div id="outline-container-orgff6bbaf" class="outline-4">
-<h4 id="orgff6bbaf"><span class="section-number-4">4.1.3</span> Listing fully qualified names</h4>
+<div id="outline-container-org980d276" class="outline-4">
+<h4 id="org980d276"><span class="section-number-4">4.1.3.</span> Listing fully qualified names</h4>
 <div class="outline-text-4" id="text-4-1-3">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="org23cd4a8"><span style="color: #00ffff;">SELECT</span> fsobj.id,
+<pre class="src src-sqlite" id="org94955d3"><span style="color: #00ffff;">SELECT</span> fsobj.id,
        fsobj.fname,
         <span style="color: #00ffff;">CASE</span> <span style="color: #00ffff;">WHEN</span> fsobj.id = fsobj.pid <span style="color: #00ffff;">THEN</span> dirsfq.fqpn
                                        <span style="color: #00ffff;">ELSE</span> dirsfq.fqpn||<span style="color: #fa8072;">'/'</span>||fsobj.fname 
@@ -1894,15 +1893,15 @@ Note the equals sign in the <code>WHERE</code> clause.  With the equality the re
 </div>
 </div>
 
-<div id="outline-container-org8f35cd7" class="outline-4">
-<h4 id="org8f35cd7"><span class="section-number-4">4.1.4</span> Orphaned Objects</h4>
+<div id="outline-container-org04b466b" class="outline-4">
+<h4 id="org04b466b"><span class="section-number-4">4.1.4.</span> Orphaned Objects</h4>
 <div class="outline-text-4" id="text-4-1-4">
 </div>
-<div id="outline-container-org560d63b" class="outline-5">
-<h5 id="org560d63b"><span class="section-number-5">4.1.4.1</span> Fully qualified path names for files which have no owner in the <code>users</code> table</h5>
+<div id="outline-container-org132204e" class="outline-5">
+<h5 id="org132204e"><span class="section-number-5">4.1.4.1.</span> Fully qualified path names for files which have no owner in the <code>users</code> table</h5>
 <div class="outline-text-5" id="text-4-1-4-1">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="orge8e41cc"><span style="color: #00ffff;">SELECT</span> <span style="color: #00ffff;">CASE</span> <span style="color: #00ffff;">WHEN</span> tmp1.id = tmp1.pid <span style="color: #00ffff;">THEN</span> dirsfq.fqpn
+<pre class="src src-sqlite" id="orgac983f9"><span style="color: #00ffff;">SELECT</span> <span style="color: #00ffff;">CASE</span> <span style="color: #00ffff;">WHEN</span> tmp1.id = tmp1.pid <span style="color: #00ffff;">THEN</span> dirsfq.fqpn
                                       <span style="color: #00ffff;">ELSE</span> dirsfq.fqpn||<span style="color: #fa8072;">'/'</span>||tmp1.fname 
        <span style="color: #00ffff;">END</span> <span style="color: #00ffff;">AS</span> fqpn
   <span style="color: #00ffff;">FROM</span> (<span style="color: #00ffff;">SELECT</span> fname, 
@@ -1964,8 +1963,8 @@ Note the equals sign in the <code>WHERE</code> clause.  With the equality the re
 </div>
 </div>
 
-<div id="outline-container-org29e4f8a" class="outline-5">
-<h5 id="org29e4f8a"><span class="section-number-5">4.1.4.2</span> Space consumed by files which have no owner in the <code>users</code> table</h5>
+<div id="outline-container-org2b8796c" class="outline-5">
+<h5 id="org2b8796c"><span class="section-number-5">4.1.4.2.</span> Space consumed by files which have no owner in the <code>users</code> table</h5>
 <div class="outline-text-5" id="text-4-1-4-2">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> <span style="color: #b0c4de;">SUM</span>(bytes)/(1024*1024*1024.0) <span style="color: #00ffff;">AS</span> gbused
@@ -1995,8 +1994,8 @@ Note the equals sign in the <code>WHERE</code> clause.  With the equality the re
 </div>
 </div>
 
-<div id="outline-container-org79baded" class="outline-5">
-<h5 id="org79baded"><span class="section-number-5">4.1.4.3</span> Fully qualified path names for files which have no owner in the <code>groups</code> table</h5>
+<div id="outline-container-orgb67969f" class="outline-5">
+<h5 id="orgb67969f"><span class="section-number-5">4.1.4.3.</span> Fully qualified path names for files which have no owner in the <code>groups</code> table</h5>
 <div class="outline-text-5" id="text-4-1-4-3">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> dirs.relpn||<span style="color: #fa8072;">'/'</span>||tmp1.fname <span style="color: #00ffff;">AS</span> relpn
@@ -2059,8 +2058,8 @@ Note the equals sign in the <code>WHERE</code> clause.  With the equality the re
 </div>
 </div>
 
-<div id="outline-container-orgb8cb254" class="outline-5">
-<h5 id="orgb8cb254"><span class="section-number-5">4.1.4.4</span> Space consumed by files which have no owner in the <code>groups</code> table</h5>
+<div id="outline-container-org7b07217" class="outline-5">
+<h5 id="org7b07217"><span class="section-number-5">4.1.4.4.</span> Space consumed by files which have no owner in the <code>groups</code> table</h5>
 <div class="outline-text-5" id="text-4-1-4-4">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> <span style="color: #b0c4de;">SUM</span>(bytes)/(1024*1024*1024.0) <span style="color: #00ffff;">AS</span> gbused
@@ -2091,15 +2090,15 @@ Note the equals sign in the <code>WHERE</code> clause.  With the equality the re
 </div>
 </div>
 
-<div id="outline-container-orgc270d01" class="outline-4">
-<h4 id="orgc270d01"><span class="section-number-4">4.1.5</span> Duplicate Files</h4>
+<div id="outline-container-org4c73ac0" class="outline-4">
+<h4 id="org4c73ac0"><span class="section-number-4">4.1.5.</span> Duplicate Files</h4>
 <div class="outline-text-4" id="text-4-1-5">
 </div>
-<div id="outline-container-org674135b" class="outline-5">
-<h5 id="org674135b"><span class="section-number-5">4.1.5.1</span> List check sum and fully qualified path names for non-empty, regular files with the same check sums</h5>
+<div id="outline-container-org3a2d965" class="outline-5">
+<h5 id="org3a2d965"><span class="section-number-5">4.1.5.1.</span> List check sum and fully qualified path names for non-empty, regular files with the same check sums</h5>
 <div class="outline-text-5" id="text-4-1-5-1">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="orgd134627"><span style="color: #00ffff;">SELECT</span> tmp1.csum                   <span style="color: #00ffff;">AS</span> dcsum,
+<pre class="src src-sqlite" id="orgcf9c3a1"><span style="color: #00ffff;">SELECT</span> tmp1.csum                   <span style="color: #00ffff;">AS</span> dcsum,
        dirs.relpn||<span style="color: #fa8072;">'/'</span>||tmp1.fname <span style="color: #00ffff;">AS</span> relpn
   <span style="color: #00ffff;">FROM</span> (<span style="color: #00ffff;">SELECT</span> fname, 
                id, 
@@ -2149,11 +2148,11 @@ Note the equals sign in the <code>WHERE</code> clause.  With the equality the re
 </div>
 </div>
 
-<div id="outline-container-org0363545" class="outline-5">
-<h5 id="org0363545"><span class="section-number-5">4.1.5.2</span> Space used by duplicated files</h5>
+<div id="outline-container-org376e3ad" class="outline-5">
+<h5 id="org376e3ad"><span class="section-number-5">4.1.5.2.</span> Space used by duplicated files</h5>
 <div class="outline-text-5" id="text-4-1-5-2">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="org098194a"><span style="color: #00ffff;">SELECT</span> <span style="color: #b0c4de;">SUM</span>(bsize*(dupcount-1))/(1024*1024*1024.0) <span style="color: #00ffff;">AS</span> gbwasted
+<pre class="src src-sqlite" id="orgf66ac35"><span style="color: #00ffff;">SELECT</span> <span style="color: #b0c4de;">SUM</span>(bsize*(dupcount-1))/(1024*1024*1024.0) <span style="color: #00ffff;">AS</span> gbwasted
   <span style="color: #00ffff;">FROM</span> (<span style="color: #00ffff;">SELECT</span> <span style="color: #b0c4de;">COUNT</span>(1)   <span style="color: #00ffff;">AS</span> dupcount,
                <span style="color: #b0c4de;">MAX</span>(bytes) <span style="color: #00ffff;">AS</span> bsize,
                csum
@@ -2185,15 +2184,15 @@ Note the equals sign in the <code>WHERE</code> clause.  With the equality the re
 </div>
 </div>
 
-<div id="outline-container-orga2d9fc5" class="outline-4">
-<h4 id="orga2d9fc5"><span class="section-number-4">4.1.6</span> Biggest files</h4>
+<div id="outline-container-org65d60a3" class="outline-4">
+<h4 id="org65d60a3"><span class="section-number-4">4.1.6.</span> Biggest files</h4>
 <div class="outline-text-4" id="text-4-1-6">
 </div>
-<div id="outline-container-org515c35d" class="outline-5">
-<h5 id="org515c35d"><span class="section-number-5">4.1.6.1</span> Relative path and size for the largest file(s)</h5>
+<div id="outline-container-org6eca9f8" class="outline-5">
+<h5 id="org6eca9f8"><span class="section-number-5">4.1.6.1.</span> Relative path and size for the largest file(s)</h5>
 <div class="outline-text-5" id="text-4-1-6-1">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="org3b1c3b1"><span style="color: #00ffff;">SELECT</span> dirs.relpn||<span style="color: #fa8072;">'/'</span>||tmp1.fname <span style="color: #00ffff;">AS</span> relpn
+<pre class="src src-sqlite" id="org2ae967f"><span style="color: #00ffff;">SELECT</span> dirs.relpn||<span style="color: #fa8072;">'/'</span>||tmp1.fname <span style="color: #00ffff;">AS</span> relpn
   <span style="color: #00ffff;">FROM</span> (<span style="color: #00ffff;">SELECT</span> pid,
                fname 
           <span style="color: #00ffff;">FROM</span> fsobj
@@ -2228,11 +2227,11 @@ Note the equals sign in the <code>WHERE</code> clause.  With the equality the re
 </div>
 </div>
 
-<div id="outline-container-org08f03ca" class="outline-5">
-<h5 id="org08f03ca"><span class="section-number-5">4.1.6.2</span> Relative path and size for the largest 20 files</h5>
+<div id="outline-container-org8188ccd" class="outline-5">
+<h5 id="org8188ccd"><span class="section-number-5">4.1.6.2.</span> Relative path and size for the largest 20 files</h5>
 <div class="outline-text-5" id="text-4-1-6-2">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="orgff0a235"><span style="color: #00ffff;">SELECT</span> dirs.relpn||<span style="color: #fa8072;">'/'</span>||tmp1.fname <span style="color: #00ffff;">AS</span> relpn,
+<pre class="src src-sqlite" id="orgd7f6a2d"><span style="color: #00ffff;">SELECT</span> dirs.relpn||<span style="color: #fa8072;">'/'</span>||tmp1.fname <span style="color: #00ffff;">AS</span> relpn,
        bytes
   <span style="color: #00ffff;">FROM</span> (<span style="color: #00ffff;">SELECT</span> pid,
                fname,
@@ -2277,19 +2276,19 @@ Note the equals sign in the <code>WHERE</code> clause.  With the equality the re
 </div>
 </div>
 
-<div id="outline-container-org7b0ea75" class="outline-4">
-<h4 id="org7b0ea75"><span class="section-number-4">4.1.7</span> File size statstics</h4>
+<div id="outline-container-org2d25128" class="outline-4">
+<h4 id="org2d25128"><span class="section-number-4">4.1.7.</span> File size statstics</h4>
 <div class="outline-text-4" id="text-4-1-7">
 </div>
-<div id="outline-container-org390f694" class="outline-5">
-<h5 id="org390f694"><span class="section-number-5">4.1.7.1</span> Relative path and size for the median file</h5>
+<div id="outline-container-org95bc3b2" class="outline-5">
+<h5 id="org95bc3b2"><span class="section-number-5">4.1.7.1.</span> Relative path and size for the median file</h5>
 <div class="outline-text-5" id="text-4-1-7-1">
 <p>
 sqlite has no median function, but we can get close with this:
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sqlite" id="org8ce948d"><span style="color: #00ffff;">SELECT</span> <span style="color: #00ffff;">CASE</span> <span style="color: #00ffff;">WHEN</span> tmp1.id = tmp1.pid <span style="color: #00ffff;">THEN</span> dirs.relpn
+<pre class="src src-sqlite" id="orgc970e64"><span style="color: #00ffff;">SELECT</span> <span style="color: #00ffff;">CASE</span> <span style="color: #00ffff;">WHEN</span> tmp1.id = tmp1.pid <span style="color: #00ffff;">THEN</span> dirs.relpn
                                       <span style="color: #00ffff;">ELSE</span> dirs.relpn||<span style="color: #fa8072;">'/'</span>||tmp1.fname 
        <span style="color: #00ffff;">END</span> <span style="color: #00ffff;">AS</span> relpn,
        bytes
@@ -2330,11 +2329,11 @@ sqlite has no median function, but we can get close with this:
 </div>
 </div>
 
-<div id="outline-container-org1215ea3" class="outline-5">
-<h5 id="org1215ea3"><span class="section-number-5">4.1.7.2</span> variance, mean, count, sum, &amp; sum of squares</h5>
+<div id="outline-container-org244ba65" class="outline-5">
+<h5 id="org244ba65"><span class="section-number-5">4.1.7.2.</span> variance, mean, count, sum, &amp; sum of squares</h5>
 <div class="outline-text-5" id="text-4-1-7-2">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="org02f936f"><span style="color: #00ffff;">SELECT</span> (n*ss-s)/(n*n-n) <span style="color: #00ffff;">AS</span> var,
+<pre class="src src-sqlite" id="org85c466a"><span style="color: #00ffff;">SELECT</span> (n*ss-s)/(n*n-n) <span style="color: #00ffff;">AS</span> var,
        s/n              <span style="color: #00ffff;">AS</span> mean,
        n                <span style="color: #00ffff;">AS</span> n,
        s                <span style="color: #00ffff;">AS</span> s,
@@ -2382,11 +2381,11 @@ sqlite has no median function, but we can get close with this:
 </div>
 </div>
 
-<div id="outline-container-orge2a9c59" class="outline-5">
-<h5 id="orge2a9c59"><span class="section-number-5">4.1.7.3</span> variance, mean, count, sum, &amp; sum of squares broken out by file extention</h5>
+<div id="outline-container-org32c1755" class="outline-5">
+<h5 id="org32c1755"><span class="section-number-5">4.1.7.3.</span> variance, mean, count, sum, &amp; sum of squares broken out by file extention</h5>
 <div class="outline-text-5" id="text-4-1-7-3">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="org2e4e5e0"><span style="color: #00ffff;">SELECT</span> fext             <span style="color: #00ffff;">AS</span> fext,
+<pre class="src src-sqlite" id="org94afef5"><span style="color: #00ffff;">SELECT</span> fext             <span style="color: #00ffff;">AS</span> fext,
        (n*ss-s)/(n*n-n) <span style="color: #00ffff;">AS</span> var,
        s/n              <span style="color: #00ffff;">AS</span> mean,
        n                <span style="color: #00ffff;">AS</span> n,
@@ -2443,15 +2442,15 @@ sqlite has no median function, but we can get close with this:
 </div>
 </div>
 
-<div id="outline-container-org9825ba4" class="outline-4">
-<h4 id="org9825ba4"><span class="section-number-4">4.1.8</span> Size in GB</h4>
+<div id="outline-container-orge9f1347" class="outline-4">
+<h4 id="orge9f1347"><span class="section-number-4">4.1.8.</span> Size in GB</h4>
 <div class="outline-text-4" id="text-4-1-8">
 </div>
-<div id="outline-container-org73d9386" class="outline-5">
-<h5 id="org73d9386"><span class="section-number-5">4.1.8.1</span> For jpegs</h5>
+<div id="outline-container-org46ec456" class="outline-5">
+<h5 id="org46ec456"><span class="section-number-5">4.1.8.1.</span> For jpegs</h5>
 <div class="outline-text-5" id="text-4-1-8-1">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="org14acf25"><span style="color: #00ffff;">SELECT</span> <span style="color: #b0c4de;">COUNT</span>(*)                      <span style="color: #00ffff;">AS</span> numfiles,
+<pre class="src src-sqlite" id="org11fb87b"><span style="color: #00ffff;">SELECT</span> <span style="color: #b0c4de;">COUNT</span>(*)                      <span style="color: #00ffff;">AS</span> numfiles,
        <span style="color: #b0c4de;">SUM</span>(bytes)/(1024*1024*1024.0) <span style="color: #00ffff;">AS</span> sizeingb
   <span style="color: #00ffff;">FROM</span> fsobj 
   <span style="color: #00ffff;">WHERE</span> ftype = <span style="color: #fa8072;">'r'</span>              <span style="color: #00ffff;">AND</span>
@@ -2488,8 +2487,8 @@ sqlite has no median function, but we can get close with this:
 </div>
 </div>
 
-<div id="outline-container-orgff28969" class="outline-5">
-<h5 id="orgff28969"><span class="section-number-5">4.1.8.2</span> For PDFs</h5>
+<div id="outline-container-org36f9c66" class="outline-5">
+<h5 id="org36f9c66"><span class="section-number-5">4.1.8.2.</span> For PDFs</h5>
 <div class="outline-text-5" id="text-4-1-8-2">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> <span style="color: #b0c4de;">SUM</span>(bytes)/(1024*1024*1024.0) <span style="color: #00ffff;">AS</span> gbused
@@ -2514,11 +2513,11 @@ sqlite has no median function, but we can get close with this:
 </div>
 </div>
 
-<div id="outline-container-orga439a75" class="outline-5">
-<h5 id="orga439a75"><span class="section-number-5">4.1.8.3</span> By each user (<code>userid</code> &amp; <code>uname</code>)</h5>
+<div id="outline-container-org2604ea1" class="outline-5">
+<h5 id="org2604ea1"><span class="section-number-5">4.1.8.3.</span> By each user (<code>userid</code> &amp; <code>uname</code>)</h5>
 <div class="outline-text-5" id="text-4-1-8-3">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="orgc5c1d99"><span style="color: #00ffff;">SELECT</span> users.uname,
+<pre class="src src-sqlite" id="orge979585"><span style="color: #00ffff;">SELECT</span> users.uname,
        tmp1.userid,
        tmp1.gbused
   <span style="color: #00ffff;">FROM</span> (<span style="color: #00ffff;">SELECT</span> userid,
@@ -2559,11 +2558,11 @@ sqlite has no median function, but we can get close with this:
 </div>
 </div>
 
-<div id="outline-container-org2f53c17" class="outline-5">
-<h5 id="org2f53c17"><span class="section-number-5">4.1.8.4</span> By each user (<code>groupid</code> &amp; <code>gname</code>)</h5>
+<div id="outline-container-org4906a9b" class="outline-5">
+<h5 id="org4906a9b"><span class="section-number-5">4.1.8.4.</span> By each user (<code>groupid</code> &amp; <code>gname</code>)</h5>
 <div class="outline-text-5" id="text-4-1-8-4">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="orgba3932a"><span style="color: #00ffff;">SELECT</span> groups.gname,
+<pre class="src src-sqlite" id="orgb010c2e"><span style="color: #00ffff;">SELECT</span> groups.gname,
        tmp1.groupid,
        tmp1.gbused
   <span style="color: #00ffff;">FROM</span> (<span style="color: #00ffff;">SELECT</span> groupid,
@@ -2604,11 +2603,11 @@ sqlite has no median function, but we can get close with this:
 </div>
 </div>
 
-<div id="outline-container-org81d38f9" class="outline-5">
-<h5 id="org81d38f9"><span class="section-number-5">4.1.8.5</span> By each user (<code>userid</code>, <code>uname, =groupid</code> &amp; <code>gname</code>)</h5>
+<div id="outline-container-orgbe8d651" class="outline-5">
+<h5 id="orgbe8d651"><span class="section-number-5">4.1.8.5.</span> By each user (<code>userid</code>, <code>uname, =groupid</code> &amp; <code>gname</code>)</h5>
 <div class="outline-text-5" id="text-4-1-8-5">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="orgebebd74"><span style="color: #00ffff;">SELECT</span> users.uname, 
+<pre class="src src-sqlite" id="orgbf621bd"><span style="color: #00ffff;">SELECT</span> users.uname, 
        groups.gname,
        tmp1.userid,
        tmp1.gbused
@@ -2657,15 +2656,15 @@ sqlite has no median function, but we can get close with this:
 </div>
 </div>
 
-<div id="outline-container-org438c915" class="outline-5">
-<h5 id="org438c915"><span class="section-number-5">4.1.8.6</span> By age</h5>
+<div id="outline-container-org4e410c0" class="outline-5">
+<h5 id="org4e410c0"><span class="section-number-5">4.1.8.6.</span> By age</h5>
 <div class="outline-text-5" id="text-4-1-8-6">
 </div>
-<div id="outline-container-orgdf414c2" class="outline-6">
-<h6 id="orgdf414c2"><span class="section-number-6">4.1.8.6.1</span> By month</h6>
+<div id="outline-container-orgf1db47c" class="outline-6">
+<h6 id="orgf1db47c"><span class="section-number-6">4.1.8.6.1.</span> By month</h6>
 <div class="outline-text-6" id="text-4-1-8-6-1">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="orgbfa55ef"><span style="color: #00ffff;">SELECT</span> <span style="color: #00ffff;">CASE</span> <span style="color: #00ffff;">WHEN</span> datetime(mtime, <span style="color: #fa8072;">'unixepoch'</span>, <span style="color: #fa8072;">'localtime'</span>) &lt; <span style="color: #63b8ff;">date</span>(<span style="color: #fa8072;">'now'</span>, <span style="color: #fa8072;">'-360 day'</span>) <span style="color: #00ffff;">THEN</span> <span style="color: #fa8072;">'12m-inf'</span>
+<pre class="src src-sqlite" id="orgd625663"><span style="color: #00ffff;">SELECT</span> <span style="color: #00ffff;">CASE</span> <span style="color: #00ffff;">WHEN</span> datetime(mtime, <span style="color: #fa8072;">'unixepoch'</span>, <span style="color: #fa8072;">'localtime'</span>) &lt; <span style="color: #63b8ff;">date</span>(<span style="color: #fa8072;">'now'</span>, <span style="color: #fa8072;">'-360 day'</span>) <span style="color: #00ffff;">THEN</span> <span style="color: #fa8072;">'12m-inf'</span>
             <span style="color: #00ffff;">WHEN</span> datetime(mtime, <span style="color: #fa8072;">'unixepoch'</span>, <span style="color: #fa8072;">'localtime'</span>) &lt; <span style="color: #63b8ff;">date</span>(<span style="color: #fa8072;">'now'</span>, <span style="color: #fa8072;">'-330 day'</span>) <span style="color: #00ffff;">THEN</span> <span style="color: #fa8072;">'11m-12m'</span>
             <span style="color: #00ffff;">WHEN</span> datetime(mtime, <span style="color: #fa8072;">'unixepoch'</span>, <span style="color: #fa8072;">'localtime'</span>) &lt; <span style="color: #63b8ff;">date</span>(<span style="color: #fa8072;">'now'</span>, <span style="color: #fa8072;">'-300 day'</span>) <span style="color: #00ffff;">THEN</span> <span style="color: #fa8072;">'10m-11m'</span>
             <span style="color: #00ffff;">WHEN</span> datetime(mtime, <span style="color: #fa8072;">'unixepoch'</span>, <span style="color: #fa8072;">'localtime'</span>) &lt; <span style="color: #63b8ff;">date</span>(<span style="color: #fa8072;">'now'</span>, <span style="color: #fa8072;">'-270 day'</span>) <span style="color: #00ffff;">THEN</span> <span style="color: #fa8072;">'09m-10m'</span>
@@ -2715,11 +2714,11 @@ sqlite has no median function, but we can get close with this:
 </div>
 </div>
 
-<div id="outline-container-org1ddce97" class="outline-6">
-<h6 id="org1ddce97"><span class="section-number-6">4.1.8.6.2</span> By year</h6>
+<div id="outline-container-org908b73c" class="outline-6">
+<h6 id="org908b73c"><span class="section-number-6">4.1.8.6.2.</span> By year</h6>
 <div class="outline-text-6" id="text-4-1-8-6-2">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="orgbd211dc"><span style="color: #00ffff;">SELECT</span> <span style="color: #00ffff;">CASE</span> <span style="color: #00ffff;">WHEN</span> datetime(mtime, <span style="color: #fa8072;">'unixepoch'</span>, <span style="color: #fa8072;">'localtime'</span>) &lt; <span style="color: #63b8ff;">date</span>(<span style="color: #fa8072;">'now'</span>, <span style="color: #fa8072;">'-1460 day'</span>) <span style="color: #00ffff;">THEN</span> <span style="color: #fa8072;">'5y-if'</span>
+<pre class="src src-sqlite" id="orgcbfd170"><span style="color: #00ffff;">SELECT</span> <span style="color: #00ffff;">CASE</span> <span style="color: #00ffff;">WHEN</span> datetime(mtime, <span style="color: #fa8072;">'unixepoch'</span>, <span style="color: #fa8072;">'localtime'</span>) &lt; <span style="color: #63b8ff;">date</span>(<span style="color: #fa8072;">'now'</span>, <span style="color: #fa8072;">'-1460 day'</span>) <span style="color: #00ffff;">THEN</span> <span style="color: #fa8072;">'5y-if'</span>
             <span style="color: #00ffff;">WHEN</span> datetime(mtime, <span style="color: #fa8072;">'unixepoch'</span>, <span style="color: #fa8072;">'localtime'</span>) &lt; <span style="color: #63b8ff;">date</span>(<span style="color: #fa8072;">'now'</span>, <span style="color: #fa8072;">'-1095 day'</span>) <span style="color: #00ffff;">THEN</span> <span style="color: #fa8072;">'3y-4y'</span>
             <span style="color: #00ffff;">WHEN</span> datetime(mtime, <span style="color: #fa8072;">'unixepoch'</span>, <span style="color: #fa8072;">'localtime'</span>) &lt; <span style="color: #63b8ff;">date</span>(<span style="color: #fa8072;">'now'</span>, <span style="color: #fa8072;">'-730  day'</span>) <span style="color: #00ffff;">THEN</span> <span style="color: #fa8072;">'2y-3y'</span>
             <span style="color: #00ffff;">WHEN</span> datetime(mtime, <span style="color: #fa8072;">'unixepoch'</span>, <span style="color: #fa8072;">'localtime'</span>) &lt; <span style="color: #63b8ff;">date</span>(<span style="color: #fa8072;">'now'</span>, <span style="color: #fa8072;">'-365  day'</span>) <span style="color: #00ffff;">THEN</span> <span style="color: #fa8072;">'1y-2y'</span>
@@ -2762,12 +2761,12 @@ sqlite has no median function, but we can get close with this:
 </div>
 </div>
 
-<div id="outline-container-orgee492cb" class="outline-5">
-<h5 id="orgee492cb"><span class="section-number-5">4.1.8.7</span> By a subtree</h5>
+<div id="outline-container-orgf2e76aa" class="outline-5">
+<h5 id="orgf2e76aa"><span class="section-number-5">4.1.8.7.</span> By a subtree</h5>
 <div class="outline-text-5" id="text-4-1-8-7">
 </div>
-<div id="outline-container-org064fd61" class="outline-6">
-<h6 id="org064fd61"><span class="section-number-6">4.1.8.7.1</span> Disocver the <code>lft</code> and <code>rgt</code> values for our path</h6>
+<div id="outline-container-org2324c72" class="outline-6">
+<h6 id="org2324c72"><span class="section-number-6">4.1.8.7.1.</span> Disocver the <code>lft</code> and <code>rgt</code> values for our path</h6>
 <div class="outline-text-6" id="text-4-1-8-7-1">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">select</span> * 
@@ -2816,8 +2815,8 @@ sqlite has no median function, but we can get close with this:
 </div>
 </div>
 
-<div id="outline-container-org25d7632" class="outline-6">
-<h6 id="org25d7632"><span class="section-number-6">4.1.8.7.2</span> Size of everything in the directory tree</h6>
+<div id="outline-container-org9b84373" class="outline-6">
+<h6 id="org9b84373"><span class="section-number-6">4.1.8.7.2.</span> Size of everything in the directory tree</h6>
 <div class="outline-text-6" id="text-4-1-8-7-2">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> <span style="color: #b0c4de;">COUNT</span>(1)           <span style="color: #00ffff;">AS</span> objcount,
@@ -2852,8 +2851,8 @@ sqlite has no median function, but we can get close with this:
 </div>
 </div>
 
-<div id="outline-container-org981a9cf" class="outline-6">
-<h6 id="org981a9cf"><span class="section-number-6">4.1.8.7.3</span> Size of the objects directly contained in that directory</h6>
+<div id="outline-container-org9592632" class="outline-6">
+<h6 id="org9592632"><span class="section-number-6">4.1.8.7.3.</span> Size of the objects directly contained in that directory</h6>
 <div class="outline-text-6" id="text-4-1-8-7-3">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> <span style="color: #b0c4de;">SUM</span>(bytes)/(1024*1024*1024.0) <span style="color: #00ffff;">AS</span> gbused
@@ -2884,12 +2883,12 @@ sqlite has no median function, but we can get close with this:
 </div>
 </div>
 
-<div id="outline-container-org2339258" class="outline-4">
-<h4 id="org2339258"><span class="section-number-4">4.1.9</span> Maximum directory depth</h4>
+<div id="outline-container-org141f7b2" class="outline-4">
+<h4 id="org141f7b2"><span class="section-number-4">4.1.9.</span> Maximum directory depth</h4>
 <div class="outline-text-4" id="text-4-1-9">
 </div>
-<div id="outline-container-org6d7fdb1" class="outline-5">
-<h5 id="org6d7fdb1"><span class="section-number-5">4.1.9.1</span> Find the maximum depth</h5>
+<div id="outline-container-orgaa734ba" class="outline-5">
+<h5 id="orgaa734ba"><span class="section-number-5">4.1.9.1.</span> Find the maximum depth</h5>
 <div class="outline-text-5" id="text-4-1-9-1">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> <span style="color: #b0c4de;">MAX</span>(ddeep) 
@@ -2917,8 +2916,8 @@ sqlite has no median function, but we can get close with this:
 </div>
 </div>
 
-<div id="outline-container-org9077af1" class="outline-5">
-<h5 id="org9077af1"><span class="section-number-5">4.1.9.2</span> Find the files at  maximum depth</h5>
+<div id="outline-container-org00d8f17" class="outline-5">
+<h5 id="org00d8f17"><span class="section-number-5">4.1.9.2.</span> Find the files at  maximum depth</h5>
 <div class="outline-text-5" id="text-4-1-9-2">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> id,
@@ -2974,12 +2973,12 @@ sqlite has no median function, but we can get close with this:
 </div>
 </div>
 
-<div id="outline-container-org14de629" class="outline-4">
-<h4 id="org14de629"><span class="section-number-4">4.1.10</span> Differences between scans</h4>
+<div id="outline-container-org6d071ca" class="outline-4">
+<h4 id="org6d071ca"><span class="section-number-4">4.1.10.</span> Differences between scans</h4>
 <div class="outline-text-4" id="text-4-1-10">
 </div>
-<div id="outline-container-orgc1c75ce" class="outline-5">
-<h5 id="orgc1c75ce"><span class="section-number-5">4.1.10.1</span> Filename in left but not right</h5>
+<div id="outline-container-orga05b73d" class="outline-5">
+<h5 id="orga05b73d"><span class="section-number-5">4.1.10.1.</span> Filename in left but not right</h5>
 <div class="outline-text-5" id="text-4-1-10-1">
 <div class="org-src-container">
 <pre class="src src-sqlite">attach database "test1.sqlite" <span style="color: #00ffff;">as</span> d1;
@@ -2994,8 +2993,8 @@ attach database "test2.sqlite" <span style="color: #00ffff;">as</span> d2;
 </div>
 
 
-<div id="outline-container-org0caabf7" class="outline-5">
-<h5 id="org0caabf7"><span class="section-number-5">4.1.10.2</span> Filename in right but not left</h5>
+<div id="outline-container-org2d6bea0" class="outline-5">
+<h5 id="org2d6bea0"><span class="section-number-5">4.1.10.2.</span> Filename in right but not left</h5>
 <div class="outline-text-5" id="text-4-1-10-2">
 <div class="org-src-container">
 <pre class="src src-sqlite">attach database "test1.sqlite" <span style="color: #00ffff;">as</span> d1;
@@ -3009,8 +3008,8 @@ attach database "test2.sqlite" <span style="color: #00ffff;">as</span> d2;
 </div>
 </div>
 
-<div id="outline-container-org23c0ab4" class="outline-5">
-<h5 id="org23c0ab4"><span class="section-number-5">4.1.10.3</span> Files on left with content matching no file on right</h5>
+<div id="outline-container-orgc84bd27" class="outline-5">
+<h5 id="orgc84bd27"><span class="section-number-5">4.1.10.3.</span> Files on left with content matching no file on right</h5>
 <div class="outline-text-5" id="text-4-1-10-3">
 <div class="org-src-container">
 <pre class="src src-sqlite">attach database "test1.sqlite" <span style="color: #00ffff;">as</span> d1;
@@ -3028,8 +3027,8 @@ attach database "test2.sqlite" <span style="color: #00ffff;">as</span> d2;
 </div>
 </div>
 
-<div id="outline-container-org97070f2" class="outline-5">
-<h5 id="org97070f2"><span class="section-number-5">4.1.10.4</span> Files on right with content matching no file on left</h5>
+<div id="outline-container-orga6880ce" class="outline-5">
+<h5 id="orga6880ce"><span class="section-number-5">4.1.10.4.</span> Files on right with content matching no file on left</h5>
 <div class="outline-text-5" id="text-4-1-10-4">
 <div class="org-src-container">
 <pre class="src src-sqlite">attach database "test1.sqlite" <span style="color: #00ffff;">as</span> d1;
@@ -3065,8 +3064,8 @@ attach database "test2.sqlite" <span style="color: #00ffff;">as</span> d2;
 </div>
 </div>
 
-<div id="outline-container-org26521e7" class="outline-5">
-<h5 id="org26521e7"><span class="section-number-5">4.1.10.5</span> Checksums that only exist in one of the scans</h5>
+<div id="outline-container-orgdabc0bd" class="outline-5">
+<h5 id="orgdabc0bd"><span class="section-number-5">4.1.10.5.</span> Checksums that only exist in one of the scans</h5>
 <div class="outline-text-5" id="text-4-1-10-5">
 <div class="org-src-container">
 <pre class="src src-sqlite">attach database "test1.sqlite" <span style="color: #00ffff;">as</span> d1;
@@ -3124,8 +3123,8 @@ attach database "test2.sqlite" <span style="color: #00ffff;">as</span> d2;
 </div>
 </div>
 
-<div id="outline-container-orgbb9fb87" class="outline-5">
-<h5 id="orgbb9fb87"><span class="section-number-5">4.1.10.6</span> Objects with same name but diffrent content</h5>
+<div id="outline-container-org7ed3303" class="outline-5">
+<h5 id="org7ed3303"><span class="section-number-5">4.1.10.6.</span> Objects with same name but diffrent content</h5>
 <div class="outline-text-5" id="text-4-1-10-6">
 <p>
 Note we do not restrict to <code>ftype</code> equal to <code>'r'</code> as this causes the query to become quite slow.  If one wishes to restrict to regular files, then it is
@@ -3140,7 +3139,7 @@ attach database "test2.sqlite" <span style="color: #00ffff;">as</span> d2;
   <span style="color: #00ffff;">INNER</span> <span style="color: #00ffff;">JOIN</span> d2.annofsobj
       <span style="color: #00ffff;">ON</span> d1.annofsobj.fname =  d2.annofsobj.fname <span style="color: #00ffff;">AND</span>
          d1.annofsobj.csum  &lt;&gt; d2.annofsobj.csum  <span style="color: #00ffff;">AND</span>
-         d1.annofsobj.relpn  =  d2.annofsobj.relpn;      <span style="color: #ff7f24;">-- Last for performance</span>
+         d1.annofsobj.relpn  =  d2.annofsobj.relpn;      <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Last for performance</span>
 </pre>
 </div>
 
@@ -3172,8 +3171,8 @@ attach database "test2.sqlite" <span style="color: #00ffff;">as</span> d2;
 </div>
 </div>
 
-<div id="outline-container-org4baa542" class="outline-5">
-<h5 id="org4baa542"><span class="section-number-5">4.1.10.7</span> Objects with same name but diffrent time stamps</h5>
+<div id="outline-container-org09a6c80" class="outline-5">
+<h5 id="org09a6c80"><span class="section-number-5">4.1.10.7.</span> Objects with same name but diffrent time stamps</h5>
 <div class="outline-text-5" id="text-4-1-10-7">
 <p>
 Note we do not restrict to <code>ftype</code> equal to <code>'r'</code> as this causes the query to become quite slow.  If one wishes to restrict to regular files, then it is
@@ -3189,7 +3188,7 @@ attach database "test2.sqlite" <span style="color: #00ffff;">as</span> d2;
       <span style="color: #00ffff;">ON</span> d1.annofsobj.fname =  d2.annofsobj.fname       <span style="color: #00ffff;">AND</span>
          (d1.annofsobj.mtime &lt;&gt; d2.annofsobj.mtime      <span style="color: #00ffff;">OR</span>
           d1.annofsobj.ctime &lt;&gt; d2.annofsobj.ctime)     <span style="color: #00ffff;">AND</span>
-         d1.annofsobj.relpn  =  d2.annofsobj.relpn;      <span style="color: #ff7f24;">-- Last for performance</span>
+         d1.annofsobj.relpn  =  d2.annofsobj.relpn;      <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">Last for performance</span>
 </pre>
 </div>
 
@@ -3277,8 +3276,8 @@ attach database "test2.sqlite" <span style="color: #00ffff;">as</span> d2;
 </div>
 </div>
 
-<div id="outline-container-org531846f" class="outline-5">
-<h5 id="org531846f"><span class="section-number-5">4.1.10.8</span> Diffrence Report</h5>
+<div id="outline-container-org3828378" class="outline-5">
+<h5 id="org3828378"><span class="section-number-5">4.1.10.8.</span> Diffrence Report</h5>
 <div class="outline-text-5" id="text-4-1-10-8">
 <p>
 Note that this can be quite slow on large scans.  A better technique is to materialize <code>d1.annofsobj</code> &amp; <code>d2.annofsobj</code> first in an in-RAM DB, and then do the
@@ -3482,12 +3481,12 @@ attach database "test2.sqlite" <span style="color: #00ffff;">as</span> d2;
 </div>
 </div>
 
-<div id="outline-container-orgec1f5a0" class="outline-4">
-<h4 id="orgec1f5a0"><span class="section-number-4">4.1.11</span> Tree traversial</h4>
+<div id="outline-container-orgee1d5f6" class="outline-4">
+<h4 id="orgee1d5f6"><span class="section-number-4">4.1.11.</span> Tree traversial</h4>
 <div class="outline-text-4" id="text-4-1-11">
 </div>
-<div id="outline-container-orgadffa61" class="outline-5">
-<h5 id="orgadffa61"><span class="section-number-5">4.1.11.1</span> If id is in pre-order tree traversial order, then&#x2026;</h5>
+<div id="outline-container-org07333ba" class="outline-5">
+<h5 id="org07333ba"><span class="section-number-5">4.1.11.1.</span> If id is in pre-order tree traversial order, then&#x2026;</h5>
 <div class="outline-text-5" id="text-4-1-11-1">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> mvalue 
@@ -3498,8 +3497,8 @@ attach database "test2.sqlite" <span style="color: #00ffff;">as</span> d2;
 </div>
 
 
-<div id="outline-container-org7710ddb" class="outline-6">
-<h6 id="org7710ddb"><span class="section-number-6">4.1.11.1.1</span> Fast method using <code>id</code> from the <code>fsobj</code> table</h6>
+<div id="outline-container-org17e5234" class="outline-6">
+<h6 id="org17e5234"><span class="section-number-6">4.1.11.1.1.</span> Fast method using <code>id</code> from the <code>fsobj</code> table</h6>
 <div class="outline-text-6" id="text-4-1-11-1-1">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> PRINTF(<span style="color: #fa8072;">'%*s'</span>, 2*ddeep, fname)
@@ -3508,7 +3507,7 @@ attach database "test2.sqlite" <span style="color: #00ffff;">as</span> d2;
 </pre>
 </div>
 
-<pre class="example" id="orge4e6c35">
+<pre class="example" id="orgb6f9cbf">
 r
 " x"
 "   o"
@@ -3521,8 +3520,8 @@ r
 </div>
 </div>
 
-<div id="outline-container-orgc85f0b4" class="outline-6">
-<h6 id="orgc85f0b4"><span class="section-number-6">4.1.11.1.2</span> Fast method using <code>lft</code> from the <code>fsobj</code> table</h6>
+<div id="outline-container-orgdf503c0" class="outline-6">
+<h6 id="orgdf503c0"><span class="section-number-6">4.1.11.1.2.</span> Fast method using <code>lft</code> from the <code>fsobj</code> table</h6>
 <div class="outline-text-6" id="text-4-1-11-1-2">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> PRINTF(<span style="color: #fa8072;">'%*s'</span>, 2*ddeep, fname)
@@ -3531,7 +3530,7 @@ r
 </pre>
 </div>
 
-<pre class="example" id="orgeac2070">
+<pre class="example" id="org3fc883f">
 r
 " x"
 "   o"
@@ -3544,8 +3543,8 @@ r
 </div>
 </div>
 
-<div id="outline-container-org0f34806" class="outline-6">
-<h6 id="org0f34806"><span class="section-number-6">4.1.11.1.3</span> Slow method using <code>annofsobj</code> table</h6>
+<div id="outline-container-orged48206" class="outline-6">
+<h6 id="orged48206"><span class="section-number-6">4.1.11.1.3.</span> Slow method using <code>annofsobj</code> table</h6>
 <div class="outline-text-6" id="text-4-1-11-1-3">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> relpn
@@ -3599,8 +3598,8 @@ r
 </div>
 </div>
 
-<div id="outline-container-orgd0884a9" class="outline-5">
-<h5 id="orgd0884a9"><span class="section-number-5">4.1.11.2</span> With adjcency table (id &amp; pid)</h5>
+<div id="outline-container-orge86c800" class="outline-5">
+<h5 id="orge86c800"><span class="section-number-5">4.1.11.2.</span> With adjcency table (id &amp; pid)</h5>
 <div class="outline-text-5" id="text-4-1-11-2">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">WITH</span> <span style="color: #00ffff;">RECURSIVE</span> tmp1 (dalevel, pid, id, ppath) <span style="color: #00ffff;">AS</span> (
@@ -3704,15 +3703,15 @@ r
 </div>
 </div>
 
-<div id="outline-container-org8fe1a25" class="outline-3">
-<h3 id="org8fe1a25"><span class="section-number-3">4.2</span> Scan Performance</h3>
+<div id="outline-container-orga87f4df" class="outline-3">
+<h3 id="orga87f4df"><span class="section-number-3">4.2.</span> Scan Performance</h3>
 <div class="outline-text-3" id="text-4-2">
 </div>
-<div id="outline-container-orge37ad77" class="outline-4">
-<h4 id="orge37ad77"><span class="section-number-4">4.2.1</span> Objects/second scanned during filesystem scan phase</h4>
+<div id="outline-container-orge2ab498" class="outline-4">
+<h4 id="orge2ab498"><span class="section-number-4">4.2.1.</span> Objects/second scanned during filesystem scan phase</h4>
 <div class="outline-text-4" id="text-4-2-1">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="org9238918"><span style="color: #00ffff;">SELECT</span> ((<span style="color: #00ffff;">SELECT</span> mvalue <span style="color: #00ffff;">FROM</span> meta <span style="color: #00ffff;">WHERE</span> mkey = <span style="color: #fa8072;">'objCnt'</span>) /
+<pre class="src src-sqlite" id="orged24e35"><span style="color: #00ffff;">SELECT</span> ((<span style="color: #00ffff;">SELECT</span> mvalue <span style="color: #00ffff;">FROM</span> meta <span style="color: #00ffff;">WHERE</span> mkey = <span style="color: #fa8072;">'objCnt'</span>) /
         <span style="color: #b0c4de;">COALESCE</span>((<span style="color: #00ffff;">SELECT</span> mvalue 
                     <span style="color: #00ffff;">FROM</span> annometa
                     <span style="color: #00ffff;">WHERE</span> mkey   = <span style="color: #fa8072;">'scanTime'</span> <span style="color: #00ffff;">AND</span>
@@ -3741,11 +3740,11 @@ r
 </div>
 </div>
 
-<div id="outline-container-org6d6aca1" class="outline-4">
-<h4 id="org6d6aca1"><span class="section-number-4">4.2.2</span> Objects/second process for entire process run time</h4>
+<div id="outline-container-orga727acc" class="outline-4">
+<h4 id="orga727acc"><span class="section-number-4">4.2.2.</span> Objects/second process for entire process run time</h4>
 <div class="outline-text-4" id="text-4-2-2">
 <div class="org-src-container">
-<pre class="src src-sqlite" id="orgc5cf8cb"><span style="color: #00ffff;">SELECT</span> ((<span style="color: #00ffff;">SELECT</span> mvalue <span style="color: #00ffff;">FROM</span> meta <span style="color: #00ffff;">WHERE</span> mkey = <span style="color: #fa8072;">'objCnt'</span>) /
+<pre class="src src-sqlite" id="org9ae9fff"><span style="color: #00ffff;">SELECT</span> ((<span style="color: #00ffff;">SELECT</span> mvalue <span style="color: #00ffff;">FROM</span> meta <span style="color: #00ffff;">WHERE</span> mkey = <span style="color: #fa8072;">'objCnt'</span>) /
         <span style="color: #b0c4de;">COALESCE</span>((<span style="color: #00ffff;">SELECT</span> mvalue 
                     <span style="color: #00ffff;">FROM</span> annometa
                     <span style="color: #00ffff;">WHERE</span> mkey   = <span style="color: #fa8072;">'totalTime'</span> <span style="color: #00ffff;">AND</span>
@@ -3774,15 +3773,15 @@ r
 </div>
 </div>
 
-<div id="outline-container-org227dfad" class="outline-4">
-<h4 id="org227dfad"><span class="section-number-4">4.2.3</span> Megaabytes/second processed durring DB dump and CSUM</h4>
+<div id="outline-container-org36f7bb8" class="outline-4">
+<h4 id="org36f7bb8"><span class="section-number-4">4.2.3.</span> Megaabytes/second processed durring DB dump and CSUM</h4>
 <div class="outline-text-4" id="text-4-2-3">
 <p>
 Most of the complexity in this query is adding up the number of MB used for CSUMs.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sqlite" id="org308bde5"><span style="color: #00ffff;">SELECT</span> <span style="color: #00ffff;">CASE</span> <span style="color: #00ffff;">WHEN</span> (<span style="color: #00ffff;">SELECT</span> mvalue <span style="color: #00ffff;">FROM</span> meta <span style="color: #00ffff;">WHERE</span> mkey = <span style="color: #fa8072;">'csum'</span>) = <span style="color: #fa8072;">'csum_1k'</span>
+<pre class="src src-sqlite" id="org97da1b7"><span style="color: #00ffff;">SELECT</span> <span style="color: #00ffff;">CASE</span> <span style="color: #00ffff;">WHEN</span> (<span style="color: #00ffff;">SELECT</span> mvalue <span style="color: #00ffff;">FROM</span> meta <span style="color: #00ffff;">WHERE</span> mkey = <span style="color: #fa8072;">'csum'</span>) = <span style="color: #fa8072;">'csum_1k'</span>
              <span style="color: #00ffff;">THEN</span> (<span style="color: #00ffff;">SELECT</span> mvalue <span style="color: #00ffff;">FROM</span> meta <span style="color: #00ffff;">WHERE</span> mkey = <span style="color: #fa8072;">'cntCsumByte1KC'</span>)
             <span style="color: #00ffff;">WHEN</span> (<span style="color: #00ffff;">SELECT</span> mvalue <span style="color: #00ffff;">FROM</span> meta <span style="color: #00ffff;">WHERE</span> mkey = <span style="color: #fa8072;">'csum'</span>) = <span style="color: #fa8072;">'nil'</span>
              <span style="color: #00ffff;">THEN</span> 0
@@ -3818,12 +3817,12 @@ Most of the complexity in this query is adding up the number of MB used for CSUM
 </div>
 </div>
 
-<div id="outline-container-org5697b0f" class="outline-3">
-<h3 id="org5697b0f"><span class="section-number-3">4.3</span> How to make SQLite faster!</h3>
+<div id="outline-container-org42d5d3b" class="outline-3">
+<h3 id="org42d5d3b"><span class="section-number-3">4.3.</span> How to make SQLite faster!</h3>
 <div class="outline-text-3" id="text-4-3">
 </div>
-<div id="outline-container-org6667891" class="outline-4">
-<h4 id="org6667891"><span class="section-number-4">4.3.1</span> On disk</h4>
+<div id="outline-container-orgc9a193f" class="outline-4">
+<h4 id="orgc9a193f"><span class="section-number-4">4.3.1.</span> On disk</h4>
 <div class="outline-text-4" id="text-4-3-1">
 <p>
 The options here trade space for speed. In the table below are measurements for a typical example DB housing approximately 2M file-system objects.  It is
@@ -3868,15 +3867,15 @@ normal to see <code>faster3</code> expand the DB size by about 10x.  Performance
 </table>
 </div>
 
-<div id="outline-container-org2920943" class="outline-5">
-<h5 id="org2920943"><span class="section-number-5">4.3.1.1</span> Add indexes for faster queries (<code>faster1</code>)</h5>
+<div id="outline-container-orga0970fa" class="outline-5">
+<h5 id="orga0970fa"><span class="section-number-5">4.3.1.1.</span> Add indexes for faster queries (<code>faster1</code>)</h5>
 <div class="outline-text-5" id="text-4-3-1-1">
 <p>
 Increases size of DB a bit.  Note that the <code>uname</code> and <code>gname</code> ones might fail on some platforms.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sqlite" id="org0a58e3f"><span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">UNIQUE</span> INDEX fsobj_id          <span style="color: #00ffff;">ON</span> fsobj     (id);
+<pre class="src src-sqlite" id="org6f2b04f"><span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">UNIQUE</span> INDEX fsobj_id          <span style="color: #00ffff;">ON</span> fsobj     (id);
 <span style="color: #00ffff;">CREATE</span>        INDEX fsobj_pid         <span style="color: #00ffff;">ON</span> fsobj     (pid);
 <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">UNIQUE</span> INDEX fsobj_lft         <span style="color: #00ffff;">ON</span> fsobj     (lft);
 <span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">UNIQUE</span> INDEX fsobj_rgt         <span style="color: #00ffff;">ON</span> fsobj     (rgt);
@@ -3893,15 +3892,15 @@ Increases size of DB a bit.  Note that the <code>uname</code> and <code>gname</c
 </div>
 </div>
 
-<div id="outline-container-org655bb30" class="outline-5">
-<h5 id="org655bb30"><span class="section-number-5">4.3.1.2</span> Materialize smaller views and add indexes to result (<code>faster2</code>)</h5>
+<div id="outline-container-orgf3cb009" class="outline-5">
+<h5 id="orgf3cb009"><span class="section-number-5">4.3.1.2.</span> Materialize smaller views and add indexes to result (<code>faster2</code>)</h5>
 <div class="outline-text-5" id="text-4-3-1-2">
 <p>
 Makes DBs larger, but not too much.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sqlite" id="orgbfb43db"><span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> <span style="color: #00fa9a; font-weight: bold;">materialized_groups</span> <span style="color: #00ffff;">AS</span>
+<pre class="src src-sqlite" id="org6016a6b"><span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> <span style="color: #00fa9a; font-weight: bold;">materialized_groups</span> <span style="color: #00ffff;">AS</span>
   <span style="color: #00ffff;">SELECT</span> *
   <span style="color: #00ffff;">FROM</span> groups;
 <span style="color: #00ffff;">DROP</span> <span style="color: #00ffff;">VIEW</span> <span style="color: #00fa9a; font-weight: bold;">groups</span>;
@@ -3933,15 +3932,15 @@ Makes DBs larger, but not too much.
 </div>
 </div>
 
-<div id="outline-container-orga5e6e79" class="outline-5">
-<h5 id="orga5e6e79"><span class="section-number-5">4.3.1.3</span> Materialize the BIG view and add indexes to result (<code>faster3</code>)</h5>
+<div id="outline-container-org5658f26" class="outline-5">
+<h5 id="org5658f26"><span class="section-number-5">4.3.1.3.</span> Materialize the BIG view and add indexes to result (<code>faster3</code>)</h5>
 <div class="outline-text-5" id="text-4-3-1-3">
 <p>
 Makes DBs very large, but speeds things up quite a bit.
 </p>
 
 <div class="org-src-container">
-<pre class="src src-sqlite" id="orgc318986"><span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> <span style="color: #00fa9a; font-weight: bold;">materialized_dirs</span> <span style="color: #00ffff;">AS</span>
+<pre class="src src-sqlite" id="orgd6bec9d"><span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> <span style="color: #00fa9a; font-weight: bold;">materialized_dirs</span> <span style="color: #00ffff;">AS</span>
   <span style="color: #00ffff;">SELECT</span> *
   <span style="color: #00ffff;">FROM</span> dirs;
 <span style="color: #00ffff;">DROP</span> <span style="color: #00ffff;">VIEW</span> <span style="color: #00fa9a; font-weight: bold;">dirs</span>;
@@ -3971,8 +3970,8 @@ Makes DBs very large, but speeds things up quite a bit.
 </div>
 </div>
 
-<div id="outline-container-org64c214d" class="outline-4">
-<h4 id="org64c214d"><span class="section-number-4">4.3.2</span> In RAM!</h4>
+<div id="outline-container-org369beac" class="outline-4">
+<h4 id="org369beac"><span class="section-number-4">4.3.2.</span> In RAM!</h4>
 <div class="outline-text-4" id="text-4-3-2">
 <p>
 The ultimate performance improvement can be produced by materializing the views you need into a RAM based sqlite database.  This can yield a 100x performance
@@ -3985,7 +3984,7 @@ Here we demonstrate how to work with the <code>annofsobj</code> tables from two 
 </p>
 
 <p>
-See: <a href="#org14de629">Differences between scans</a> for how to attach <code>d1</code> &amp; <code>d2</code>.
+See: <a href="#org6d071ca">Differences between scans</a> for how to attach <code>d1</code> &amp; <code>d2</code>.
 </p>
 
 <div class="org-src-container">
@@ -4019,7 +4018,7 @@ PRAGMA journal_mode=<span style="color: #00ffff;">OFF</span>;
 </div>
 
 <p>
-Now we can perform one of the queries in <a href="#org14de629">Differences between scans</a> by
+Now we can perform one of the queries in <a href="#org6d071ca">Differences between scans</a> by
 replacing "d1." with "d2_" and "d2." with "d2_".  For example, we can
 find files with the same relpn but different checksums like so:
 </p>
@@ -4038,12 +4037,12 @@ find files with the same relpn but different checksums like so:
 </div>
 </div>
 
-<div id="outline-container-orga08682d" class="outline-2">
-<h2 id="orga08682d"><span class="section-number-2">5</span> Tools to access scan DBs</h2>
+<div id="outline-container-orge801b34" class="outline-2">
+<h2 id="orge801b34"><span class="section-number-2">5.</span> Tools to access scan DBs</h2>
 <div class="outline-text-2" id="text-5">
 </div>
-<div id="outline-container-org6356c5e" class="outline-3">
-<h3 id="org6356c5e"><span class="section-number-3">5.1</span> sqlite3</h3>
+<div id="outline-container-org061b8e4" class="outline-3">
+<h3 id="org061b8e4"><span class="section-number-3">5.1.</span> sqlite3</h3>
 <div class="outline-text-3" id="text-5-1">
 <p>
 The <code>sqlite3</code> command line interface is probably the most obvious choice.
@@ -4062,11 +4061,20 @@ Note that on Windows, you may need to run the <code>sqlite3</code> binary via <c
 <pre class="src src-sh">winpty.exe <span style="color: #fa8072;">'C:\msys64\mingw64\bin\sqlite3.exe'</span>
 </pre>
 </div>
+
+<p>
+And you can automatically fire it up with the last DB in the <code>.dircsum</code> directory like so (bash or zsh):
+</p>
+
+<div class="org-src-container">
+<pre class="src src-sh">winpty.exe <span style="color: #fa8072;">'C:\msys64\mingw64\bin\sqlite3.exe'</span> <span style="color: #bf3eff; font-weight: bold;">`ls .dircsum/* | sort | tail -n 1`</span>
+</pre>
+</div>
 </div>
 </div>
 
-<div id="outline-container-org56d3125" class="outline-3">
-<h3 id="org56d3125"><span class="section-number-3">5.2</span> Shell and sqlite3</h3>
+<div id="outline-container-org0f94a04" class="outline-3">
+<h3 id="org0f94a04"><span class="section-number-3">5.2.</span> Shell and sqlite3</h3>
 <div class="outline-text-3" id="text-5-2">
 <p>
 Running some SQL on an sqlite database from the command line is relatively simple.  This is a great way to pull some data, and feed the results to another
@@ -4078,7 +4086,7 @@ shell command &#x2013; like the <code>column</code> command in the example below
 </pre>
 </div>
 
-<pre class="example" id="orgffb3a99">
+<pre class="example" id="orga5e0507">
 id  pid  lft  rgt  ddeep  userid  groupid  ftype  fmodes  fname  bytes  atime       mtime       ctime       csum
 2   1    2    3    2      0       128      d      16888   f      0      1490563841  1490563841  1490563841  /media/sf_richmit/world/my_prog/checkSum/csum20/a/b/f
 1   0    1    4    1      0       128      d      16888   b      0      1490563841  1490563841  1490563841  /media/sf_richmit/world/my_prog/checkSum/csum20/a/b
@@ -4094,8 +4102,8 @@ id  pid  lft  rgt  ddeep  userid  groupid  ftype  fmodes  fname  bytes  atime   
 </div>
 </div>
 
-<div id="outline-container-org79fe873" class="outline-3">
-<h3 id="org79fe873"><span class="section-number-3">5.3</span> Shell, org-mode file, and sqlite3 (with a bit of ruby)</h3>
+<div id="outline-container-orgaebd1de" class="outline-3">
+<h3 id="orgaebd1de"><span class="section-number-3">5.3.</span> Shell, org-mode file, and sqlite3 (with a bit of ruby)</h3>
 <div class="outline-text-3" id="text-5-3">
 <p>
 This file has several useful bits of SQL code.  The <a href="applyOrgBlockSQL.rb">applyOrgBlockSQL.rb</a> script makes it easy to extract a bit of SQL from an org-mode document, like
@@ -4107,7 +4115,7 @@ this one, and run the SQL on a DB.
 </pre>
 </div>
 
-<pre class="example" id="orgdd05736">
+<pre class="example" id="org753f1c5">
 id|relpn
 2|/media/sf_richmit/world/my_prog/checkSum/csum20/a/b/f
 1|/media/sf_richmit/world/my_prog/checkSum/csum20/a/b
@@ -4123,8 +4131,8 @@ id|relpn
 </div>
 </div>
 
-<div id="outline-container-org716ef70" class="outline-3">
-<h3 id="org716ef70"><span class="section-number-3">5.4</span> R and dplyr</h3>
+<div id="outline-container-orgeea7ec7" class="outline-3">
+<h3 id="orgeea7ec7"><span class="section-number-3">5.4.</span> R and dplyr</h3>
 <div class="outline-text-3" id="text-5-4">
 <div class="org-src-container">
 <pre class="src src-R"><span style="color: #ffa500;"># </span><span style="color: #ff7f24;">Connect to the DB</span>
@@ -4150,15 +4158,15 @@ ggplot2::ggplot(dplyr::filter(results, bytes&lt;=cutoff), aes(x=bytes)) +
 </div>
 
 
-<div id="org2a2fc09" class="figure">
+<div id="orge604347" class="figure">
 <p><img src="aGraphFromR1.png" alt="aGraphFromR1.png" />
 </p>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org46e6a13" class="outline-3">
-<h3 id="org46e6a13"><span class="section-number-3">5.5</span> R and RSQLite</h3>
+<div id="outline-container-org69ba559" class="outline-3">
+<h3 id="org69ba559"><span class="section-number-3">5.5.</span> R and RSQLite</h3>
 <div class="outline-text-3" id="text-5-5">
 <div class="org-src-container">
 <pre class="src src-R"><span style="color: #8470ff; font-weight: bold;">library</span>(<span style="color: #fa8072;">"DBI"</span>)
@@ -4176,15 +4184,15 @@ ggplot2::ggplot(dplyr::filter(results, bytes&lt;=cutoff), aes(x=bytes)) +
 </div>
 
 
-<div id="orge78d3c9" class="figure">
+<div id="orgd983850" class="figure">
 <p><img src="aGraphFromR2.png" alt="aGraphFromR2.png" />
 </p>
 </div>
 </div>
 </div>
 
-<div id="outline-container-org94596bd" class="outline-3">
-<h3 id="org94596bd"><span class="section-number-3">5.6</span> Emacs and org-mode</h3>
+<div id="outline-container-orgc0aad4f" class="outline-3">
+<h3 id="orgc0aad4f"><span class="section-number-3">5.6.</span> Emacs and org-mode</h3>
 <div class="outline-text-3" id="text-5-6">
 <p>
 Much of this document is an example of doing SQL queries directly from org-mode documents by including connection data in the code block.  Here is a minimal example:
@@ -4225,15 +4233,15 @@ Much of this document is an example of doing SQL queries directly from org-mode 
 </div>
 
 <div id="outline-container-testing" class="outline-2">
-<h2 id="testing"><span class="section-number-2">6</span> Testing</h2>
+<h2 id="testing"><span class="section-number-2">6.</span> Testing</h2>
 <div class="outline-text-2" id="text-testing">
 </div>
-<div id="outline-container-org911e6c8" class="outline-3">
-<h3 id="org911e6c8"><span class="section-number-3">6.1</span> <code>test1</code></h3>
+<div id="outline-container-org77b593f" class="outline-3">
+<h3 id="org77b593f"><span class="section-number-3">6.1.</span> <code>test1</code></h3>
 <div class="outline-text-3" id="text-6-1">
 </div>
-<div id="outline-container-orgc4d1a1b" class="outline-4">
-<h4 id="orgc4d1a1b"><span class="section-number-4">6.1.1</span> Create the directory structure</h4>
+<div id="outline-container-org8c5d960" class="outline-4">
+<h4 id="org8c5d960"><span class="section-number-4">6.1.1.</span> Create the directory structure</h4>
 <div class="outline-text-4" id="text-6-1-1">
 <div class="org-src-container">
 <pre class="src src-sh">rm -rf      r
@@ -4250,8 +4258,8 @@ mkdir       r/z/q
 </div>
 </div>
 
-<div id="outline-container-org32c8588" class="outline-4">
-<h4 id="org32c8588"><span class="section-number-4">6.1.2</span> Scan the directory structure</h4>
+<div id="outline-container-org7aa2508" class="outline-4">
+<h4 id="org7aa2508"><span class="section-number-4">6.1.2.</span> Scan the directory structure</h4>
 <div class="outline-text-4" id="text-6-1-2">
 <div class="org-src-container">
 <pre class="src src-sh">seq -s= 120 | tr -d <span style="color: #fa8072;">'0-9'</span>
@@ -4290,12 +4298,12 @@ id  pid  lft  rgt  ddeep  userid  groupid  ftype  fmodes  fname  fext  bytes  at
 </div>
 </div>
 
-<div id="outline-container-org893ea96" class="outline-3">
-<h3 id="org893ea96"><span class="section-number-3">6.2</span> <code>test2</code></h3>
+<div id="outline-container-org8026573" class="outline-3">
+<h3 id="org8026573"><span class="section-number-3">6.2.</span> <code>test2</code></h3>
 <div class="outline-text-3" id="text-6-2">
 </div>
-<div id="outline-container-org50535de" class="outline-4">
-<h4 id="org50535de"><span class="section-number-4">6.2.1</span> Create the directory structure</h4>
+<div id="outline-container-org76edf66" class="outline-4">
+<h4 id="org76edf66"><span class="section-number-4">6.2.1.</span> Create the directory structure</h4>
 <div class="outline-text-4" id="text-6-2-1">
 <div class="org-src-container">
 <pre class="src src-sh">rm -rf      r
@@ -4314,8 +4322,8 @@ mkdir       r/x/p
 </div>
 </div>
 
-<div id="outline-container-orge6a3fb5" class="outline-4">
-<h4 id="orge6a3fb5"><span class="section-number-4">6.2.2</span> Scan the directory structure</h4>
+<div id="outline-container-orga6cab31" class="outline-4">
+<h4 id="orga6cab31"><span class="section-number-4">6.2.2.</span> Scan the directory structure</h4>
 <div class="outline-text-4" id="text-6-2-2">
 <div class="org-src-container">
 <pre class="src src-sh">seq -s= 120 | tr -d <span style="color: #fa8072;">'0-9'</span>
@@ -4355,8 +4363,8 @@ id  pid  lft  rgt  ddeep  userid  groupid  ftype  fmodes  fname  fext  bytes  at
 </div>
 </div>
 
-<div id="outline-container-org0497daf" class="outline-4">
-<h4 id="org0497daf"><span class="section-number-4">6.2.3</span> Test query of <code>annofsobj</code></h4>
+<div id="outline-container-orgc6f95e2" class="outline-4">
+<h4 id="orgc6f95e2"><span class="section-number-4">6.2.3.</span> Test query of <code>annofsobj</code></h4>
 <div class="outline-text-4" id="text-6-2-3">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> relpn
@@ -4409,8 +4417,8 @@ id  pid  lft  rgt  ddeep  userid  groupid  ftype  fmodes  fname  fext  bytes  at
 </div>
 </div>
 
-<div id="outline-container-org164c41c" class="outline-4">
-<h4 id="org164c41c"><span class="section-number-4">6.2.4</span> Test query of <code>fqpn</code></h4>
+<div id="outline-container-org2f9ec3c" class="outline-4">
+<h4 id="org2f9ec3c"><span class="section-number-4">6.2.4.</span> Test query of <code>fqpn</code></h4>
 <div class="outline-text-4" id="text-6-2-4">
 <div class="org-src-container">
 <pre class="src src-sqlite"><span style="color: #00ffff;">SELECT</span> fqpn
@@ -4461,20 +4469,20 @@ id  pid  lft  rgt  ddeep  userid  groupid  ftype  fmodes  fname  fext  bytes  at
 </div>
 </div>
 
-<div id="outline-container-org3abbb19" class="outline-2">
-<h2 id="org3abbb19"><span class="section-number-2">7</span> Handy shell things</h2>
+<div id="outline-container-orgeb3407c" class="outline-2">
+<h2 id="orgeb3407c"><span class="section-number-2">7.</span> Handy shell things</h2>
 <div class="outline-text-2" id="text-7">
 </div>
-<div id="outline-container-orgbc9dc49" class="outline-3">
-<h3 id="orgbc9dc49"><span class="section-number-3">7.1</span> dircsum</h3>
+<div id="outline-container-orge4d5eff" class="outline-3">
+<h3 id="orge4d5eff"><span class="section-number-3">7.1.</span> dircsum</h3>
 <div class="outline-text-3" id="text-7-1">
 <p>
 cd into the directory (not the dircsum directory, but one level up)
 </p>
 </div>
 
-<div id="outline-container-org42891b2" class="outline-4">
-<h4 id="org42891b2"><span class="section-number-4">7.1.1</span> Biggest 20 files in last scan</h4>
+<div id="outline-container-orgac7b3fb" class="outline-4">
+<h4 id="orgac7b3fb"><span class="section-number-4">7.1.1.</span> Biggest 20 files in last scan</h4>
 <div class="outline-text-4" id="text-7-1-1">
 <div class="org-src-container">
 <pre class="src src-sh">applyOrgBlockSQL.rb <span style="color: #bf3eff; font-weight: bold;">`ls dircsum/* | sort | tail -n 1`</span> biggest20Files ~/world/my_prog/checkSum/csum20/readme.org | column -s<span style="color: #fa8072;">\|</span> -t
@@ -4483,8 +4491,8 @@ cd into the directory (not the dircsum directory, but one level up)
 </div>
 </div>
 
-<div id="outline-container-orgc19f06c" class="outline-4">
-<h4 id="orgc19f06c"><span class="section-number-4">7.1.2</span> File size stats</h4>
+<div id="outline-container-org2d94c7a" class="outline-4">
+<h4 id="org2d94c7a"><span class="section-number-4">7.1.2.</span> File size stats</h4>
 <div class="outline-text-4" id="text-7-1-2">
 <div class="org-src-container">
 <pre class="src src-sh">applyOrgBlockSQL.rb <span style="color: #bf3eff; font-weight: bold;">`ls dircsum/* | sort | tail -n 1`</span> fileSizeStats ~/world/my_prog/checkSum/csum20/readme.org | column -s<span style="color: #fa8072;">\|</span> -t
@@ -4493,8 +4501,8 @@ cd into the directory (not the dircsum directory, but one level up)
 </div>
 </div>
 
-<div id="outline-container-org5786fae" class="outline-4">
-<h4 id="org5786fae"><span class="section-number-4">7.1.3</span> File size stats by extention</h4>
+<div id="outline-container-org5cfee8e" class="outline-4">
+<h4 id="org5cfee8e"><span class="section-number-4">7.1.3.</span> File size stats by extention</h4>
 <div class="outline-text-4" id="text-7-1-3">
 <div class="org-src-container">
 <pre class="src src-sh">applyOrgBlockSQL.rb <span style="color: #bf3eff; font-weight: bold;">`ls dircsum/* | sort | tail -n 1`</span> fileSizeStatsByExt ~/world/my_prog/checkSum/csum20/readme.org | column -s<span style="color: #fa8072;">\|</span> -t | less
@@ -4505,12 +4513,12 @@ cd into the directory (not the dircsum directory, but one level up)
 </div>
 </div>
 
-<div id="outline-container-org2bf3d8e" class="outline-2">
-<h2 id="org2bf3d8e"><span class="section-number-2">8</span> Platform specific install notes</h2>
+<div id="outline-container-orgdac2b9f" class="outline-2">
+<h2 id="orgdac2b9f"><span class="section-number-2">8.</span> Platform specific install notes</h2>
 <div class="outline-text-2" id="text-8">
 </div>
-<div id="outline-container-org01c0cd7" class="outline-3">
-<h3 id="org01c0cd7"><span class="section-number-3">8.1</span> MSYS2 ruby on Windows</h3>
+<div id="outline-container-org6b1e49a" class="outline-3">
+<h3 id="org6b1e49a"><span class="section-number-3">8.1.</span> MSYS2 ruby on Windows</h3>
 <div class="outline-text-3" id="text-8-1">
 <p>
 If you wish to run this script from an MSYS2 shell on the MSYS2 ruby, then you will need to install the ruby sqlite3 package.  
@@ -4518,8 +4526,8 @@ If you wish to run this script from an MSYS2 shell on the MSYS2 ruby, then you w
 </div>
 </div>
 
-<div id="outline-container-orgf641908" class="outline-3">
-<h3 id="orgf641908"><span class="section-number-3">8.2</span> On Debian (last tested on 9.6)</h3>
+<div id="outline-container-orge0ce507" class="outline-3">
+<h3 id="orge0ce507"><span class="section-number-3">8.2.</span> On Debian (last tested on 9.6)</h3>
 <div class="outline-text-3" id="text-8-2">
 <p>
 Simply install ruby, sqlite3, and the ruby sqlite3 package like so:
@@ -4533,15 +4541,15 @@ Simply install ruby, sqlite3, and the ruby sqlite3 package like so:
 </div>
 </div>
 
-<div id="outline-container-org3425ce4" class="outline-2">
-<h2 id="org3425ce4"><span class="section-number-2">9</span> File Extentions</h2>
+<div id="outline-container-org4587be8" class="outline-2">
+<h2 id="org4587be8"><span class="section-number-2">9.</span> File Extentions</h2>
 <div class="outline-text-2" id="text-9">
 </div>
-<div id="outline-container-org9c9661f" class="outline-3">
-<h3 id="org9c9661f"><span class="section-number-3">9.1</span> Some extensions</h3>
+<div id="outline-container-org5e10918" class="outline-3">
+<h3 id="org5e10918"><span class="section-number-3">9.1.</span> Some extensions</h3>
 <div class="outline-text-3" id="text-9-1">
 <div class="org-src-container">
-<pre class="src src-sqlite"><span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> <span style="color: #00fa9a; font-weight: bold;">extinfo</span> (fext     TEXT,    <span style="color: #ff7f24;">-- file extension</span>
+<pre class="src src-sqlite"><span style="color: #00ffff;">CREATE</span> <span style="color: #00ffff;">TABLE</span> <span style="color: #00fa9a; font-weight: bold;">extinfo</span> (fext     TEXT,    <span style="color: #ffa500;">-- </span><span style="color: #ff7f24;">file extension</span>
                       <span style="color: #00ffff;">desc</span>     TEXT,
                       ftype    TEXT,
                       fgroup   TEXT
@@ -11713,8 +11721,8 @@ Simply install ruby, sqlite3, and the ruby sqlite3 package like so:
 </div>
 </div>
 
-<div id="outline-container-org6fd73ca" class="outline-3">
-<h3 id="org6fd73ca"><span class="section-number-3">9.2</span> Some wrapper extentions</h3>
+<div id="outline-container-org44e6670" class="outline-3">
+<h3 id="org44e6670"><span class="section-number-3">9.2.</span> Some wrapper extentions</h3>
 <div class="outline-text-3" id="text-9-2">
 <p>
 An extension with one of these added essentially wraps the file in something else (backups, version control, encryption, compression, etc&#x2026;)
@@ -11748,8 +11756,8 @@ An extension with one of these added essentially wraps the file in something els
 </div>
 </div>
 
-<div id="outline-container-org3c9f844" class="outline-2">
-<h2 id="org3c9f844"><span class="section-number-2">10</span> EOF</h2>
+<div id="outline-container-org9ae1afe" class="outline-2">
+<h2 id="org9ae1afe"><span class="section-number-2">10.</span> EOF</h2>
 <div class="outline-text-2" id="text-10">
 <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br />
 <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br />
@@ -11760,7 +11768,11 @@ An extension with one of these added essentially wraps the file in something els
 </div>
 </div>
 <div id="postamble" class="status">
-Created by Mitch Richling <<a href="mailto:http://www.mitchr.me/">http://www.mitchr.me/</a>>.  Rendered on 2022-04-09 Sat 12:35 via <a href="https://www.gnu.org/software/emacs/">Emacs</a> 27.2 (<a href="https://orgmode.org">Org</a> mode 9.4.4)
+<br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br />
+<br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br />
+<br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br />
+<br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br />
+<br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br /> <br />
 </div>
 </body>
 </html>

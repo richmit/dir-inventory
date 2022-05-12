@@ -38,6 +38,8 @@ require 'optparse/time'
 require 'sqlite3'
 require 'set'
 
+
+
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 allCols     = ['NL', 'NR', 'H', 'CT', 'MT', 'SZ', 'HASH', 'NAME']
 srchArgPat  = Regexp.new('-+s(' + allCols.join('|') + ')=(.+)$')
@@ -54,7 +56,7 @@ opts = OptionParser.new do |opts|
   opts.separator "Options:                                                                                              "
   opts.on("-h",        "--help",             "Show this message") { puts opts; exit;                                    }
   opts.on("-U",        "--dircsum",          "Set dircsum mode")  { dircsumMode = true;                                 }
-  opts.separator "                                       Uses the *TWO* most recient .dircsum DBs.                      "
+  opts.separator "                                       Uses the *TWO* most recient .dircsum DBs (newest one last).    "
   opts.separator "                                       If no directory-to-traverse is provided on the command line    "
   opts.separator "                                       and the .dircsum directory exists, then -U is assumed          "
   opts.separator "                                                                                                      "
@@ -98,11 +100,20 @@ if (files.empty?) then
 end
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
-files.each do |fileName|
+def n2cn (nOs) 
+  nOs.to_s.reverse.scan(/\d{1,3}/).join(",").reverse;
+end
+  
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------
+files.each_with_index do |fileName, fidx|
   metaData = Hash.new
   SQLite3::Database.new(fileName) do |dbCon|
     dbCon.execute("SELECT mkey, mvalue FROM meta;").each do |mkey, mvalue|
       metaData[mkey]  = mvalue;
+    end
+
+    dbCon.execute("SELECT SUM(bytes) AS sizeingb FROM fsobj WHERE ftype = 'r';").each do |tfs|
+      metaData["FAKE_tfs"] = tfs[0];
     end
   end
 
@@ -117,23 +128,23 @@ files.each do |fileName|
     puts("Precursor checksum data")
     puts("   Precursor checksum file: #{metaData['oldFileFile']}")
     puts("   Precursor criteria: Size: #{metaData['oldFileSize']}   Mtime: #{metaData['oldFileMtime']}   Ctime: #{metaData['oldFileCtime']}")
-    puts("   Checksums avoided: #{metaData['checksumAvoided']}")
+    puts("   Checksums avoided: #{n2cn(metaData['checksumAvoided'])}")
   end
   puts("Process Started at: #{Time.at(metaData['processStart'].to_i)}")
   puts("Process Completed at: #{Time.at(metaData['processEnd'].to_i)}")
-  puts("   Total process runtime .. #{metaData['processEnd'].to_i - metaData['processStart'].to_i} seconds")
-  puts("   User Scan took ......... #{metaData['dumpFinish:rusers'].to_i - metaData['dumpStart:users'].to_i} seconds")
-  puts("   Group Scan took ........ #{metaData['dumpFinish:rgroups'].to_i - metaData['dumpStart:rgroups'].to_i} seconds")
-  puts("   File Scan took ......... #{metaData['scanFinish'].to_i - metaData['scanStart'].to_i} seconds")
-  puts("   CSUM & DB dump took .... #{metaData['dumpAndCsumFinish'].to_i - metaData['dumpAndCsumStart'].to_i} seconds")
+  puts("   Total process runtime .. #{n2cn(metaData['processEnd'].to_i - metaData['processStart'].to_i)} seconds")
+  puts("   User Scan took ......... #{n2cn(metaData['dumpFinish:rusers'].to_i - metaData['dumpStart:users'].to_i)} seconds")
+  puts("   Group Scan took ........ #{n2cn(metaData['dumpFinish:rgroups'].to_i - metaData['dumpStart:rgroups'].to_i)} seconds")
+  puts("   File Scan took ......... #{n2cn(metaData['scanFinish'].to_i - metaData['scanStart'].to_i)} seconds")
+  puts("   CSUM & DB dump took .... #{n2cn(metaData['dumpAndCsumFinish'].to_i - metaData['dumpAndCsumStart'].to_i)} seconds")
   puts("     Checksum type: #{metaData['csum']}")
-  puts("     Number of checksums: #{metaData['cntCsumFiles']}")
-  puts("     Bytes checksumed: #{metaData['cntCsumByte']} bytes")
+  puts("     Number of checksums: #{n2cn(metaData['cntCsumFiles'])}")
+  puts("     Bytes checksumed: #{n2cn(metaData['cntCsumByte'])} bytes")
   puts("Scanned Object Counts")
-  puts("   Files ........ #{metaData['cntRegFile']}")
-  puts("   Directories .. #{metaData['cntDirectories']}")
-  puts("   Symlinks ..... #{metaData['cntSymLinks']}")
-  puts("   Special ...... #{metaData['cntFunnyFiles']}")
-  puts("   Total ........ #{metaData['objCnt']}")
+  puts("   Files ........ #{n2cn(metaData['cntRegFile'])}  (#{n2cn(metaData['FAKE_tfs'])} bytes)")
+  puts("   Directories .. #{n2cn(metaData['cntDirectories'])}")
+  puts("   Symlinks ..... #{n2cn(metaData['cntSymLinks'])}")
+  puts("   Special ...... #{n2cn(metaData['cntFunnyFiles'])}")
+  puts("   Total ........ #{n2cn(metaData['objCnt'])}")
   puts("================================================================================")
 end

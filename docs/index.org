@@ -2007,6 +2007,12 @@ Note that on Windows, you may need to run the =sqlite3= binary via =winpty= some
 winpty.exe 'C:\msys64\mingw64\bin\sqlite3.exe'
 #+END_SRC
 
+And you can automatically fire it up with the last DB in the =.dircsum= directory like so (bash or zsh):
+
+#+begin_src sh
+winpty.exe 'C:\msys64\mingw64\bin\sqlite3.exe' `ls .dircsum/* | sort | tail -n 1`
+#+end_src
+
 ** Shell and sqlite3
 
 Running some SQL on an sqlite database from the command line is relatively simple.  This is a great way to pull some data, and feed the results to another
