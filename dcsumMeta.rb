@@ -38,8 +38,6 @@ require 'optparse/time'
 require 'sqlite3'
 require 'set'
 
-
-
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 allCols     = ['NL', 'NR', 'H', 'CT', 'MT', 'SZ', 'HASH', 'NAME']
 srchArgPat  = Regexp.new('-+s(' + allCols.join('|') + ')=(.+)$')
@@ -47,37 +45,29 @@ srchArgPat  = Regexp.new('-+s(' + allCols.join('|') + ')=(.+)$')
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 outputFmt   = :of_human
 debug       = 3
-dircsumMode = false
 opts = OptionParser.new do |opts|
   opts.banner = "Usage: dcsumMeta.rb [options] [file ...]                                                               "
   opts.separator "                                                                                                      "
   opts.separator "Reports various metadata for provided checksum file(s)                                                "
+  opts.separator "If no files are provided, then use the *TWO* most recient .dircsum DBs (newest one first).            "
   opts.separator "                                                                                                      "
   opts.separator "Options:                                                                                              "
   opts.on("-h",        "--help",             "Show this message") { puts opts; exit;                                    }
-  opts.on("-U",        "--dircsum",          "Set dircsum mode")  { dircsumMode = true;                                 }
-  opts.separator "                                       Uses the *TWO* most recient .dircsum DBs (newest one last).    "
-  opts.separator "                                       If no directory-to-traverse is provided on the command line    "
-  opts.separator "                                       and the .dircsum directory exists, then -U is assumed          "
+  opts.on("-v",        "--debug INT",        "Set debug level")   { |v| debug=v.to_i;                                   }
+  opts.separator "                                       1 .. Print meta data report                                    "
+  opts.separator "                                       2 .. Print delta report                                        "
+  opts.separator "                                       3 .. Print ERRORS (default)                                    "
+  opts.separator "                                       4 .. Print WARNING                                             "
+  opts.separator "                                       5 .. Print INFO                                                "
+  opts.separator "                                       6 .. Print DEBUG                                               "
   opts.separator "                                                                                                      "
 end
 opts.parse!(ARGV)
 files = ARGV.clone
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
-if ( !(dircsumMode) && files.empty? ) then
+if (files.empty?) then
   if (FileTest.exist?('.dircsum')) then
-    dircsumMode = true;
-    #puts("WARNING: No directory provided, but .dircsum found -- running in -U mode")
-  else
-    puts("ERROR: No directory provided, and .dircsum missing.  Run with -U to force dircsum mode!")
-    exit
-  end
-end
-
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------
-if(dircsumMode) then
-  if(FileTest.exist?('.dircsum')) then
     oldFileFiles = Dir.glob('.dircsum/??????????????_dircsum.sqlite').sort
     if (oldFileFiles.last()) then
       files.push(oldFileFiles.pop())
@@ -85,66 +75,94 @@ if(dircsumMode) then
         files.push(oldFileFiles.last())
       end
     else
-      if(debug>=1) then STDERR.puts("WARNING: No DB files found in .dircsum directory in -U mode!") end
+      if(debug>=3) then STDERR.puts("ERROR: No DB files provided, and .dircsum contains no DB files!") end
+      exit
     end
   else
-    if(debug>=1) then STDERR.puts("WARNING: Missing .dircsum direcotyr in -U mode!") end
+    if(debug>=3) then puts("ERROR: No DB files provided, and .dircsum missing.") end
     exit
   end
-end
-
-#---------------------------------------------------------------------------------------------------------------------------------------------------------------
-if (files.empty?) then
-  if(debug>=1) then STDERR.puts("ERROR: No files to process!") end
-  exit
 end
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 def n2cn (nOs) 
   nOs.to_s.reverse.scan(/\d{1,3}/).join(",").reverse;
 end
-  
+
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
-files.each_with_index do |fileName, fidx|
-  metaData = Hash.new
+intKeys = Set.new(['processStart', 'processEnd', 'dumpFinish:rusers', 'dumpStart:users', 'dumpFinish:rgroups', 'dumpStart:rgroups', 'scanFinish', 'scanStart',
+                   'dumpAndCsumStart:files', 'dumpAndCsumFinish:files', 'cntRegFile', 'cntDirectories', 'cntSymLinks', 'cntFunnyFiles', 'objCnt']);
+metaData = Hash.new
+newestScanStart = -1;
+files.each do |fileName|
+  metaData[fileName] = Hash.new
   SQLite3::Database.new(fileName) do |dbCon|
     dbCon.execute("SELECT mkey, mvalue FROM meta;").each do |mkey, mvalue|
-      metaData[mkey]  = mvalue;
+      if (intKeys.member?(mkey)) then
+        mvalue = mvalue.to_i
+      end
+      metaData[fileName][mkey]  = mvalue
+      if ((mkey == 'processStart') && (newestScanStart < mvalue)) then
+        newestScanStart = mvalue
+      end
     end
-
     dbCon.execute("SELECT SUM(bytes) AS sizeingb FROM fsobj WHERE ftype = 'r';").each do |tfs|
-      metaData["FAKE_tfs"] = tfs[0];
+      metaData[fileName]["FAKE_tfs"] = tfs[0].to_i;
     end
   end
+end
 
-  puts("================================================================================")
-  puts("Checksum file: #{fileName}")
-  puts("================================================================================")
-  puts("Scan Engine: #{metaData['engine']}  Version: #{metaData['engine version']}")
-  puts("DB Options: BLKnFSOBJ: #{metaData['BLKnFSOBJ']}   DEVnFSOBJ: #{metaData['DEVnFSOBJ']}   EXTnFSOBJ: #{metaData['EXTnFSOBJ']}")
-  puts("Directory Scanned: #{metaData['dirToScan']}")
-  puts("Original checksum file: #{metaData['outDBfile']}")
-  if (metaData['oldFileFile']) then
-    puts("Precursor checksum data")
-    puts("   Precursor checksum file: #{metaData['oldFileFile']}")
-    puts("   Precursor criteria: Size: #{metaData['oldFileSize']}   Mtime: #{metaData['oldFileMtime']}   Ctime: #{metaData['oldFileCtime']}")
-    puts("   Checksums avoided: #{n2cn(metaData['checksumAvoided'])}")
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------
+files.each do |fileName|
+  fileMetaData = metaData[fileName];
+  if (debug>= 1) then
+    puts("================================================================================")
+    puts("Checksum file: #{fileName}  #{(newestScanStart == fileMetaData['processStart'] ? '-- (Newest File)' : '')}")
+    puts("================================================================================")
+    puts("Scan Engine: #{fileMetaData['engine']}  Version: #{fileMetaData['engine version']}")
+    puts("DB Options: BLKnFSOBJ: #{fileMetaData['BLKnFSOBJ']}   DEVnFSOBJ: #{fileMetaData['DEVnFSOBJ']}   EXTnFSOBJ: #{fileMetaData['EXTnFSOBJ']}")
+    puts("Directory Scanned: #{fileMetaData['dirToScan']}")
+    puts("Original checksum file: #{fileMetaData['outDBfile']}")
+    if (fileMetaData['oldFileFile']) then
+      puts("Precursor checksum data")
+      puts("   Precursor checksum file: #{fileMetaData['oldFileFile']}")
+      puts("   Precursor criteria: Size: #{fileMetaData['oldFileSize']}   Mtime: #{fileMetaData['oldFileMtime']}   Ctime: #{fileMetaData['oldFileCtime']}")
+      puts("   Checksums avoided: #{n2cn(fileMetaData['checksumAvoided'])}")
+    end
+    puts("Process Started at: #{Time.at(fileMetaData['processStart'])}")
+    puts("Process Completed at: #{Time.at(fileMetaData['processEnd'])}")
+    puts("   Total process runtime .. #{n2cn(fileMetaData['processEnd'] - fileMetaData['processStart'])} seconds")
+    puts("   User Scan took ......... #{n2cn(fileMetaData['dumpFinish:rusers'] - fileMetaData['dumpStart:users'])} seconds")
+    puts("   Group Scan took ........ #{n2cn(fileMetaData['dumpFinish:rgroups'] - fileMetaData['dumpStart:rgroups'])} seconds")
+    puts("   File Scan took ......... #{n2cn(fileMetaData['scanFinish'] - fileMetaData['scanStart'])} seconds")
+    puts("   CSUM & DB dump took .... #{n2cn(fileMetaData['dumpAndCsumFinish:files'] - fileMetaData['dumpAndCsumStart:files'])} seconds")
+    puts("     Checksum type: #{fileMetaData['csum']}")
+    puts("     Number of checksums: #{n2cn(fileMetaData['cntCsumFiles'])}")
+    puts("     Bytes checksumed: #{n2cn(fileMetaData['cntCsumByte'])} bytes")
+    puts("Scanned Object Counts")
+    puts("   Files ........ #{n2cn(fileMetaData['cntRegFile'])}  (#{n2cn(fileMetaData['FAKE_tfs'])} bytes)")
+    puts("   Directories .. #{n2cn(fileMetaData['cntDirectories'])}")
+    puts("   Symlinks ..... #{n2cn(fileMetaData['cntSymLinks'])}")
+    puts("   Special ...... #{n2cn(fileMetaData['cntFunnyFiles'])}")
+    puts("   Total ........ #{n2cn(fileMetaData['objCnt'])}")
+    puts("================================================================================")
   end
-  puts("Process Started at: #{Time.at(metaData['processStart'].to_i)}")
-  puts("Process Completed at: #{Time.at(metaData['processEnd'].to_i)}")
-  puts("   Total process runtime .. #{n2cn(metaData['processEnd'].to_i - metaData['processStart'].to_i)} seconds")
-  puts("   User Scan took ......... #{n2cn(metaData['dumpFinish:rusers'].to_i - metaData['dumpStart:users'].to_i)} seconds")
-  puts("   Group Scan took ........ #{n2cn(metaData['dumpFinish:rgroups'].to_i - metaData['dumpStart:rgroups'].to_i)} seconds")
-  puts("   File Scan took ......... #{n2cn(metaData['scanFinish'].to_i - metaData['scanStart'].to_i)} seconds")
-  puts("   CSUM & DB dump took .... #{n2cn(metaData['dumpAndCsumFinish'].to_i - metaData['dumpAndCsumStart'].to_i)} seconds")
-  puts("     Checksum type: #{metaData['csum']}")
-  puts("     Number of checksums: #{n2cn(metaData['cntCsumFiles'])}")
-  puts("     Bytes checksumed: #{n2cn(metaData['cntCsumByte'])} bytes")
-  puts("Scanned Object Counts")
-  puts("   Files ........ #{n2cn(metaData['cntRegFile'])}  (#{n2cn(metaData['FAKE_tfs'])} bytes)")
-  puts("   Directories .. #{n2cn(metaData['cntDirectories'])}")
-  puts("   Symlinks ..... #{n2cn(metaData['cntSymLinks'])}")
-  puts("   Special ...... #{n2cn(metaData['cntFunnyFiles'])}")
-  puts("   Total ........ #{n2cn(metaData['objCnt'])}")
-  puts("================================================================================")
+end
+
+#---------------------------------------------------------------------------------------------------------------------------------------------------------------
+if (debug>= 2) then
+  if (files.length > 1) then
+    fileNameFrom = files[0]
+    fileNameTo   = files[-1]
+    puts("================================================================================")
+    puts("Object Count Change (from #{fileNameFrom}")
+    puts("                       to #{fileNameTo})")
+    puts("   Files ........ #{n2cn(metaData[fileNameTo]['cntRegFile'] - metaData[fileNameFrom]['cntRegFile'])}  (#{n2cn(metaData[fileNameTo]['FAKE_tfs'] - metaData[fileNameFrom]['FAKE_tfs'])} bytes)")
+    puts("   Directories .. #{n2cn(metaData[fileNameTo]['cntDirectories'] - metaData[fileNameFrom]['cntDirectories'])}")
+    puts("   Symlinks ..... #{n2cn(metaData[fileNameTo]['cntSymLinks'] - metaData[fileNameFrom]['cntSymLinks'])}")
+    puts("   Special ...... #{n2cn(metaData[fileNameTo]['cntFunnyFiles'] - metaData[fileNameFrom]['cntFunnyFiles'])}")
+    puts("   Total ........ #{n2cn(metaData[fileNameTo]['objCnt'] - metaData[fileNameFrom]['objCnt'])}")
+    puts("Time Between Scans: #{((metaData[fileNameTo]['processStart'] - metaData[fileNameFrom]['processStart'])/(60*60*24.0)).round(4)} days")
+    puts("================================================================================")
+  end
 end
