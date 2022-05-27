@@ -125,7 +125,6 @@ end
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 files.each_with_index do |fileName, fileIdx|
   fileMetaData = metaData[fileName];
-puts("IDX: #{fileIdx}")
   if (debug>= 1) then
     puts("================================================================================")
     puts("Checksum file: #{fileName}  #{(newestScanStartIdx == fileIdx ? '-- (Newest File)' : '')}#{(oldestScanStartIdx == fileIdx ? '-- (Oldest File)' : '')}")
