@@ -72,11 +72,10 @@ files = ARGV.clone
 if (files.empty?) then
   if (FileTest.exist?('.dircsum')) then
     oldFileFiles = Dir.glob('.dircsum/??????????????_dircsum.sqlite').sort
-    if (oldFileFiles.last()) then
-      files.push(oldFileFiles.pop())
-      if (oldFileFiles.last()) then
-        files.push(oldFileFiles.last())
-      end
+    if (oldFileFiles.length() >= 2) then
+      files = [ oldFileFiles[-2], oldFileFiles[-1] ]
+    elsif (oldFileFiles.length() >= 1) then
+      files = [ oldFileFiles[-1] ]
     else
       if(debug>=3) then STDERR.puts("ERROR: No DB files provided, and .dircsum contains no DB files!") end
       exit
@@ -96,8 +95,11 @@ end
 intKeys = Set.new(['processStart', 'processEnd', 'dumpFinish:rusers', 'dumpStart:users', 'dumpFinish:rgroups', 'dumpStart:rgroups', 'scanFinish', 'scanStart',
                    'dumpAndCsumStart:files', 'dumpAndCsumFinish:files', 'cntRegFile', 'cntDirectories', 'cntSymLinks', 'cntFunnyFiles', 'objCnt']);
 metaData = Hash.new
-newestScanStart = -1;
-files.each do |fileName|
+newestScanStartIdx = -1
+oldestScanStartIdx = -1
+newestScanStartTim = nil
+oldestScanStartTim = nil
+files.each_with_index do |fileName, fileIdx|
   metaData[fileName] = Hash.new
   SQLite3::Database.new(fileName) do |dbCon|
     dbCon.execute("SELECT mkey, mvalue FROM meta;").each do |mkey, mvalue|
@@ -105,8 +107,13 @@ files.each do |fileName|
         mvalue = mvalue.to_i
       end
       metaData[fileName][mkey]  = mvalue
-      if ((mkey == 'processStart') && (newestScanStart < mvalue)) then
-        newestScanStart = mvalue
+      if ((mkey == 'processStart') && ((newestScanStartIdx < 0) || (newestScanStartTim < mvalue))) then
+        newestScanStartTim = mvalue
+        newestScanStartIdx = fileIdx
+      end
+      if ((mkey == 'processStart') && ((oldestScanStartIdx < 0) || (oldestScanStartTim > mvalue))) then
+        oldestScanStartTim = mvalue
+        oldestScanStartIdx = fileIdx
       end
     end
     dbCon.execute("SELECT SUM(bytes) AS sizeingb FROM fsobj WHERE ftype = 'r';").each do |tfs|
@@ -116,11 +123,12 @@ files.each do |fileName|
 end
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
-files.each do |fileName|
+files.each_with_index do |fileName, fileIdx|
   fileMetaData = metaData[fileName];
+puts("IDX: #{fileIdx}")
   if (debug>= 1) then
     puts("================================================================================")
-    puts("Checksum file: #{fileName}  #{(newestScanStart == fileMetaData['processStart'] ? '-- (Newest File)' : '')}")
+    puts("Checksum file: #{fileName}  #{(newestScanStartIdx == fileIdx ? '-- (Newest File)' : '')}#{(oldestScanStartIdx == fileIdx ? '-- (Oldest File)' : '')}")
     puts("================================================================================")
     puts("Scan Engine: #{fileMetaData['engine']}  Version: #{fileMetaData['engine version']}")
     puts("DB Options: BLKnFSOBJ: #{fileMetaData['BLKnFSOBJ']}   DEVnFSOBJ: #{fileMetaData['DEVnFSOBJ']}   EXTnFSOBJ: #{fileMetaData['EXTnFSOBJ']}")
@@ -155,8 +163,8 @@ end
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 if (debug>= 2) then
   if (files.length > 1) then
-    fileNameFrom = files[0]
-    fileNameTo   = files[-1]
+    fileNameFrom = files[oldestScanStartIdx]
+    fileNameTo   = files[newestScanStartIdx]
     puts("================================================================================")
     puts("Object Count Change (from #{fileNameFrom}")
     puts("                       to #{fileNameTo})")
