@@ -351,15 +351,18 @@ opts = OptionParser.new do |opts|
   opts.on("-o OUT-DB",    "--output OUT-DB",  "output database File name") { |v| outDBfile=v;                           }
   opts.separator "                                       If -o is missing, then a name is constructed using the         "
   opts.separator "                                       date and the strftime template '%Y%m%d%H%M%S_dircsum.sqlite'.  "
-  opts.separator "  Update Mode Options:"
+  opts.separator "  Update Mode Options:                                                                                "
   opts.on("-u OLD-DB",    "--update OLD-DB",  "File name old database")    { |v| oldFileFile=v;                         }
   opts.separator "                                       Checksums in the input database named OLD-DB are used for      "
   opts.separator "                                       scanned files which appear unchanged.  By default 'unchanged'  "
   opts.separator "                                       means identical relative path names, sizes, and time stamps.   "
   opts.separator "                                       Size, ctime, & mtime may be ignored via -s, -c, & -m options.  "
   opts.on("-c Y/N",       "--ctime Y/N",      "Check ctime for -u option") { |v| oldFileCtime=v.match(/^[YyTt]/);       }
+  opts.separator "                                        Default: #{oldFileCtime}                                      "
   opts.on("-m Y/N",       "--mtime Y/N",      "Check mtime for -u option") { |v| oldFileMtime=v.match(/^[YyTt]/);       }
+  opts.separator "                                        Default: #{oldFileMtime}                                      "
   opts.on("-s Y/N",       "--size Y/N",       "Check size for -u option")  { |v| oldFileSize=v.match(/^[YyTt]/);        }
+  opts.separator "                                        Default: #{oldFileSize}                                       "
   opts.on("-U",           "--dircsum",        "Set dircsum mode")          { dircsumMode = true;                        }
   opts.separator "                                       The idea is that one can keep a '.dircsum' directory           "
   opts.separator "                                       at the root of some directory tree, and keep a historical      "
@@ -377,20 +380,20 @@ opts = OptionParser.new do |opts|
                                                                                  end                                    }
   opts.separator "                                       * sha256 .. SHA256 (default)                                   "
   opts.separator "                                       * sha1 .... SHA1                                               "
-  opts.separator "                                       * md5 ..... MD5                                                "
+  opts.separator "                                       * md5 ..... MD5                                                "                                                              
   opts.separator "                                       * 1k ...... SHA256 of first 1KB of file                        "
   opts.separator "                                       * name .... File Name                                          "
   opts.separator "                                       * nil ..... No Checksum                                        "
-  opts.separator "  DB Schema Options:"
+  opts.separator "  DB Schema Options:                                                                                  "
   opts.on(                "--BLKnFSOBJ    Y/N",  "Store blocks & blocksz") { |v| schemaOpt['BLKnFSOBJ'] = 
                                                                              v.match(/^[YyTt]/);                        }
-  opts.separator "                                        Default: #       {schemaOpt['BLKnFSOBJ']}                     "
+  opts.separator "                                        Default: #{schemaOpt['BLKnFSOBJ']}                            "
   opts.on(                "--DEVnFSOBJ    Y/N",  "Store device ID")        { |v| schemaOpt['DEVnFSOBJ'] = 
                                                                              v.match(/^[YyTt]/);                        }
-  opts.separator "                                        Default: #       {schemaOpt['DEVnFSOBJ']}                     "
+  opts.separator "                                        Default: #{schemaOpt['DEVnFSOBJ']}                            "
   opts.on(                "--EXTnFSOBJ    Y/N",  "Store file extension")   { |v| schemaOpt['EXTnFSOBJ'] = 
                                                                              v.match(/^[YyTt]/);                        }
-  opts.separator "                                        Default: #       {schemaOpt['EXTnFSOBJ']}                     "
+  opts.separator "                                        Default: #{schemaOpt['EXTnFSOBJ']}                            "
   opts.separator "                                                                                                      "
   opts.separator "                                                                                                      "
 end
