@@ -1407,6 +1407,38 @@ SELECT SUM(bytes)/(1024*1024*1024.0) AS gbused
 |--------|
 |    0.0 |
 
+*** Git Repos
+**** Of each git repo
+
+#+begin_src sqlite
+SELECT gitRepo, 
+       sizeKbytes
+  FROM (SELECT d.lft,
+               d.rgt,
+               relpn                                           AS gitRepo,
+               (SELECT SUM(f.bytes)/(1024.0) AS siz 
+                  FROM fsobj f 
+                  WHERE f.lft >= d.lft AND
+                        f.rgt <= d.rgt)                        AS sizeKbytes
+          FROM dirs d 
+          WHERE relpn like '%.git');
+#+end_src
+
+**** Of all git repos
+
+#+begin_src sqlite
+SELECT SUM(sizeMbytes) AS totalSizeMbytes
+  FROM (SELECT d.lft,
+               d.rgt,
+               relpn                                           AS gitRepo,
+               (SELECT SUM(f.bytes)/(1024*1024.0) AS siz
+                  FROM fsobj f 
+                  WHERE f.lft >= d.lft AND
+                        f.rgt <= d.rgt)                        AS sizeMbytes 
+          FROM dirs d 
+          WHERE relpn like '%.git');
+#+end_src
+
 *** Maximum directory depth
 
 **** Find the maximum depth

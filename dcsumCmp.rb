@@ -30,6 +30,9 @@
 #
 #  Based on an older perl version.
 #
+#   Find PDF files that were in the older scan but are not in the new scan.
+#     dcsumCmp.rb --sNR '=0' --sNAME 'pdf$' --soAND    
+#
 ################################################################################################################################################################
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -122,6 +125,9 @@ opts = OptionParser.new do |opts|
   opts.separator "                                       Select lines for which the REGEX matches the NAME column.             "
   opts.on(             "--sALL",             "Search criteria matching anything") { searchArg.push(['TRUE', true]);            }
   opts.on(             "--soAND",            "Boolean search operator")           { searchArg.push(['SOP', :sop_and]);         }
+  opts.on(             "--soNOT-AND",        "Boolean search operator")           { searchArg.push(['SOP', :sop_not]);        
+                                                                                    searchArg.push(['SOP', :sop_and]);         }
+  opts.separator "                                       Equivalent of --soNOT --soAND                                         "
   opts.on(             "--soOR",             "Boolean search operator")           { searchArg.push(['SOP', :sop_or]);          }
   opts.on(             "--soNOT",            "Boolean search operator")           { searchArg.push(['SOP', :sop_not]);         }
   opts.separator "                                       The --soAND & --soOR arguments change the way search criteria are     "
@@ -157,6 +163,22 @@ opts = OptionParser.new do |opts|
   opts.separator "                                       Show files with any change unless the path contains a /.git/          "
   opts.separator "                                       component.  Equivalent to adding the following options:               "
   opts.separator "                                          --sH '=' --sSZ '=' --sCT '=' --sMT '=' --soOR --soOR --soOR        "
+  opts.on(             "--smGone",           "Macro: Stuff gone missing")         { searchArg.push(['NR', '=0']);
+                                                                                    searchArg.push(['NL', '>0']);              
+                                                                                    searchArg.push(['SOP',  :sop_and]);     }
+  opts.separator "                                       Show files with content only in left file.  Equivalent to:            "
+  opts.separator "                                          --sNR '=0' --sNL '>0' --soAND                                      "
+  opts.on(             "--smNew",            "Macro: New Stuff")                  { searchArg.push(['NR', '>0']);                                                                                         
+                                                                                    searchArg.push(['NL', '=0']);
+                                                                                    searchArg.push(['SOP',  :sop_and]);        }
+  opts.separator "                                       Show files with content only on right file.  Equivalent to:           "
+  opts.separator "                                          --sNL '=0' --sNR '>0' --soAND                                      "
+  opts.on(             "--smIMAGE",          "Macro: IMAGE files")                { searchArg.push(['NAME', '\.(ai|avi|bmp|gif|jpeg|jpg|m4v|mov|mp4|mpg|mrd|png|svg|tif|tiff|webm|xbm|xpm)$']); }
+  opts.separator "                                       Show image files, equivalent to:                                      "
+  opts.separator "                                          --sNAME A_BIG_REGEX                                                "
+  opts.on(             "--smPDF",            "Macro: PDF file")                   { searchArg.push(['NAME', '\\.pdf$']);       }
+  opts.separator "                                       Match PDF file names. Equivalent to:          "
+  opts.separator "                                          --sNAME 'pdf$'                                                     "
   opts.on(             "--smNoGIT",          "And Macro: Ignore GIT")             { if (searchArg.empty?) then 
                                                                                       searchArg = searchArgD.clone
                                                                                     end
@@ -229,14 +251,14 @@ opts = OptionParser.new do |opts|
   opts.separator "  following each normal report line.  These duplicate file names are aligned with the rest of the file       "
   opts.separator "  names in the report.  Each duplicate is preceded by a character identifying where the file name was        "
   opts.separator "  found (< in the left checksum file, > in the right checksum file, or = if it was in both).  Note ALL       "
-  opts.separator "  files are listed in this duplicate section -- including the one on the report line before the             "
+  opts.separator "  files are listed in this duplicate section -- including the one on the report line before the              "
   opts.separator "  duplicates.  Also note that duplicate sections are only printed if the current file has not already        "
   opts.separator "  been included in a previous duplicate file listing.                                                        "
   opts.separator "                                                                                                             "
   opts.separator "Examples:                                                                                                    "
-  opts.separator "  - Check out the --smXXX options for some ideas about how to combine search options.                         "
-  opts.separator "  - List file names for new files and files with content changes.  Useful for a dynamic backup scheme.      "
-  opts.separator "      --pPrefix N --pColTitles N --pCols NAME --sH '|' --sH '>'                                              "
+  opts.separator "  - Check out the --smXXX options for some ideas about how to combine search options.                        "
+  opts.separator "  - List file names for new files and files with content changes.  Useful for a dynamic backup scheme.       "
+  opts.separator "      --pPrefix N --pColTitles N --pCols NAME --sH '|' --sH '>' --soOR                                       "
   opts.separator "                                                                                                             "
 end
 opts.parse!(ARGV)
