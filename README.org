@@ -1,9 +1,9 @@
-
+github markup link
 
 # Directory Inventory Tools
 
 Documentation (rendered `org-mode` files) may be found in the
-`docs` directory [here](https://richmit.github.io/dir-inventory/index.html). 
+[[https://richmit.github.io/dir-inventory/index.html][`docs` directory]].
 
 These tools provide a way to collect file-system metadata, store that
 metadata into an SQL database, and then conveniently query that data
