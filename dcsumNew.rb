@@ -37,11 +37,12 @@
 Encoding.default_external="utf-8";
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
+require 'rubygems'
+
 require 'optparse'
 require 'optparse/time'
 require 'sqlite3'
 require 'digest'
-require 'sqlite3'
 require 'etc'
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -602,23 +603,23 @@ SQLite3::Database.new(outDBfile) do |dbCon|
   dbCon.execute("PRAGMA journal_mode=OFF")
   dbCon.execute_batch(dbSetupCode)
   dbCon.prepare( "insert into serrors values (?, ?);" ) do |dbStmtSErrors|
-    dbCon.execute( "insert into meta values (?, ?);", 'processStart',            Time.now.to_i)
-    dbCon.execute( "insert into meta values (?, ?);", 'csum',                    csumToUse.to_s)
-    dbCon.execute( "insert into meta values (?, ?);", 'engine version',          '2020-02-05')
-    dbCon.execute( "insert into meta values (?, ?);", 'engine',                  'ruby')
-    dbCon.execute( "insert into meta values (?, ?);", 'dirToScan',               dirToScan)
-    dbCon.execute( "insert into meta values (?, ?);", 'dirToScanPfx',            dirToScanPfx)
-    dbCon.execute( "insert into meta values (?, ?);", 'dirToScanNam',            dirToScanNam)
-    dbCon.execute( "insert into meta values (?, ?);", 'dircsumMode',             (dircsumMode ? "TRUE" : "FALSE"))
-    dbCon.execute( "insert into meta values (?, ?);", 'printProgress',           $printProgress)
-    dbCon.execute( "insert into meta values (?, ?);", 'outDBfile',               outDBfile)
-    dbCon.execute( "insert into meta values (?, ?);", 'oldFileFile',             oldFileFile)
-    dbCon.execute( "insert into meta values (?, ?);", 'oldFileSize',             (oldFileSize  ? "TRUE" : "FALSE"))
-    dbCon.execute( "insert into meta values (?, ?);", 'oldFileMtime',            (oldFileMtime ? "TRUE" : "FALSE"))
-    dbCon.execute( "insert into meta values (?, ?);", 'oldFileCtime',            (oldFileCtime ? "TRUE" : "FALSE"))
+    dbCon.execute( "insert into meta values (?, ?);", ['processStart',            Time.now.to_i])
+    dbCon.execute( "insert into meta values (?, ?);", ['csum',                    csumToUse.to_s])
+    dbCon.execute( "insert into meta values (?, ?);", ['engine version',          '2020-02-05'])
+    dbCon.execute( "insert into meta values (?, ?);", ['engine',                  'ruby'])
+    dbCon.execute( "insert into meta values (?, ?);", ['dirToScan',               dirToScan])
+    dbCon.execute( "insert into meta values (?, ?);", ['dirToScanPfx',            dirToScanPfx])
+    dbCon.execute( "insert into meta values (?, ?);", ['dirToScanNam',            dirToScanNam])
+    dbCon.execute( "insert into meta values (?, ?);", ['dircsumMode',             (dircsumMode ? "TRUE" : "FALSE")])
+    dbCon.execute( "insert into meta values (?, ?);", ['printProgress',           $printProgress])
+    dbCon.execute( "insert into meta values (?, ?);", ['outDBfile',               outDBfile])
+    dbCon.execute( "insert into meta values (?, ?);", ['oldFileFile',             oldFileFile])
+    dbCon.execute( "insert into meta values (?, ?);", ['oldFileSize',             (oldFileSize  ? "TRUE" : "FALSE")])
+    dbCon.execute( "insert into meta values (?, ?);", ['oldFileMtime',            (oldFileMtime ? "TRUE" : "FALSE")])
+    dbCon.execute( "insert into meta values (?, ?);", ['oldFileCtime',            (oldFileCtime ? "TRUE" : "FALSE")])
     (($printProgress & 0x0001) != 0) && puts("#{Time.now.strftime('%Y-%m-%d %H:%M:%S')} : Starting scan: #{dirToScan}")
     (($printProgress & 0x0001) != 0) && puts("#{Time.now.strftime('%Y-%m-%d %H:%M:%S')} : Collecting scan meta data")
-    dbCon.execute( "insert into meta values (?, ?);", 'dumpStart:users', Time.now.to_i)
+    dbCon.execute( "insert into meta values (?, ?);", ['dumpStart:users', Time.now.to_i])
     dbCon.prepare( "insert into rusers values (?, ?, ?, ?, ?);" ) do |dbStmtRUsers|
       Etc.passwd do |p|
         dbStmtRUsers.execute(p.uid, p.name, p.gid, p.shell, p.gecos)
@@ -628,9 +629,9 @@ SQLite3::Database.new(outDBfile) do |dbCon|
         end
         gid2pmemb[p.gid].push(p.uid)
       end
-      dbCon.execute( "insert into meta values (?, ?);", 'dumpFinish:rusers', Time.now.to_i)
+      dbCon.execute( "insert into meta values (?, ?);", ['dumpFinish:rusers', Time.now.to_i])
       # Populate db rgroups db tables
-      dbCon.execute( "insert into meta values (?, ?);", 'dumpStart:rgroups', Time.now.to_i)
+      dbCon.execute( "insert into meta values (?, ?);", ['dumpStart:rgroups', Time.now.to_i])
       dbCon.prepare( "insert into rgroups values (?, ?);" ) do |dbStmtRGroups|
         dbCon.prepare( "insert into groupmembers values (?, ?);" ) do |dbStmtGroupmembers|
           Etc.group do |g|
@@ -645,15 +646,15 @@ SQLite3::Database.new(outDBfile) do |dbCon|
         end
       end
     end
-    dbCon.execute( "insert into meta values (?, ?);", 'dumpFinish:rgroups', Time.now.to_i)
+    dbCon.execute( "insert into meta values (?, ?);", ['dumpFinish:rgroups', Time.now.to_i])
 
     (($printProgress & 0x0001) != 0) && puts("#{Time.now.strftime('%Y-%m-%d %H:%M:%S')} : Scan Starting")
-    dbCon.execute( "insert into meta values (?, ?);", 'scanStart', Time.now.to_i)
+    dbCon.execute( "insert into meta values (?, ?);", ['scanStart', Time.now.to_i])
     scanData = ScanObject.new(dirToScan)
-    dbCon.execute( "insert into meta values (?, ?);", 'scanFinish', Time.now.to_i)
+    dbCon.execute( "insert into meta values (?, ?);", ['scanFinish', Time.now.to_i])
     (($printProgress & 0x0020) != 0) && puts("")
     (($printProgress & 0x0001) != 0) && puts("#{Time.now.strftime('%Y-%m-%d %H:%M:%S')} : CSUM & DB Write Starting")
-    dbCon.execute( "insert into meta values (?, ?);", 'dumpAndCsumStart:files', Time.now.to_i)
+    dbCon.execute( "insert into meta values (?, ?);", ['dumpAndCsumStart:files', Time.now.to_i])
 
     objCnt = cntRegFile = cntDirectories = cntSymLinks = cntFunnyFiles = checksumAvoided = cntCsumByte = cntCsumByte1KC = cntCsumFiles = csumCntLastPrt = 0
     dbCon.transaction
@@ -754,20 +755,20 @@ SQLite3::Database.new(outDBfile) do |dbCon|
       end
     end
     dbCon.commit
-    dbCon.execute( "insert into meta values (?, ?);", 'dumpAndCsumFinish:files', Time.now.to_i)
+    dbCon.execute( "insert into meta values (?, ?);", ['dumpAndCsumFinish:files', Time.now.to_i])
     (($printProgress & 0x0002) != 0) && puts("")
     (($printProgress & 0x0008) != 0) && puts("")
     (($printProgress & 0x0001) != 0) && puts("#{Time.now.strftime('%Y-%m-%d %H:%M:%S')} : Processing Complete")
 
-    dbCon.execute( "insert into meta values (?, ?);", 'cntCsumFiles',    cntCsumFiles)
-    dbCon.execute( "insert into meta values (?, ?);", 'cntCsumByte',     cntCsumByte)
-    dbCon.execute( "insert into meta values (?, ?);", 'cntCsumByte1KC',  cntCsumByte1KC)
-    dbCon.execute( "insert into meta values (?, ?);", 'objCnt',          objCnt)
-    dbCon.execute( "insert into meta values (?, ?);", 'cntRegFile',      cntRegFile)
-    dbCon.execute( "insert into meta values (?, ?);", 'cntDirectories',  cntDirectories)
-    dbCon.execute( "insert into meta values (?, ?);", 'cntSymLinks',     cntSymLinks)
-    dbCon.execute( "insert into meta values (?, ?);", 'cntFunnyFiles',   cntFunnyFiles)
-    dbCon.execute( "insert into meta values (?, ?);", 'checksumAvoided', checksumAvoided)
-    dbCon.execute( "insert into meta values (?, ?);", 'processEnd',      Time.now.to_i)
+    dbCon.execute( "insert into meta values (?, ?);", ['cntCsumFiles',    cntCsumFiles])
+    dbCon.execute( "insert into meta values (?, ?);", ['cntCsumByte',     cntCsumByte])
+    dbCon.execute( "insert into meta values (?, ?);", ['cntCsumByte1KC',  cntCsumByte1KC])
+    dbCon.execute( "insert into meta values (?, ?);", ['objCnt',          objCnt])
+    dbCon.execute( "insert into meta values (?, ?);", ['cntRegFile',      cntRegFile])
+    dbCon.execute( "insert into meta values (?, ?);", ['cntDirectories',  cntDirectories])
+    dbCon.execute( "insert into meta values (?, ?);", ['cntSymLinks',     cntSymLinks])
+    dbCon.execute( "insert into meta values (?, ?);", ['cntFunnyFiles',   cntFunnyFiles])
+    dbCon.execute( "insert into meta values (?, ?);", ['checksumAvoided', checksumAvoided])
+    dbCon.execute( "insert into meta values (?, ?);", ['processEnd',      Time.now.to_i])
   end
 end
