@@ -1,6 +1,4 @@
-github markup link
-
-# Directory Inventory Tools
+* Directory Inventory Tools
 
 Documentation (rendered `org-mode` files) may be found in the
 [[https://richmit.github.io/dir-inventory/index.html][`docs` directory]].
