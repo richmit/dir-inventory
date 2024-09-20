@@ -229,7 +229,7 @@ dbSetupCode = <<SQL
              datetime(fsobj.ctime, 'unixepoch', 'localtime')  AS ctimed,
              fsobj.csum                                       AS csum,
              CASE
-               WHEN fsobj.pid=fsobj.id THEN "/"
+               WHEN fsobj.pid=fsobj.id THEN '/'
                                        ELSE dirs.relpn||'/'||fsobj.fname
              END                                              AS relpn,
             users.uname                                       AS uname,

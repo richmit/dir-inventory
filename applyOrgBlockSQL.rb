@@ -35,7 +35,7 @@ Encoding.default_external="utf-8";
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------
 nameOfDB    = ARGV[0]
 nameOfBlock = ARGV[1]
-nameOfFile  = ARGV[2] || 'readme.org'
+nameOfFile  = ARGV[2] || 'index.org'
 
 if(nameOfDB.match(/^-+h/)) then
   puts('                                                                       ')
