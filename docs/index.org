@@ -2457,6 +2457,8 @@ id  pid  lft  rgt  ddeep  userid  groupid  ftype  fmodes  fname  fext  bytes  at
 | /y     |
 | /z     |
 | /z/q   |
+| /z/r   |
+| /z/s   |
 
 *** Test query of =fqpn=
 

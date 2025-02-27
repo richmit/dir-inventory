@@ -1,5 +1,5 @@
 #!/usr/bin/env -S ruby -W0 -E utf-8
-# -*- Mode:Ruby; Coding:us-ascii-unix; fill-column:158 -*-
+# -*- Mode:Ruby; Coding:us-ascii; fill-column:158 -*-
 ################################################################################################################################################################
 ##
 # @file      dcsumCmp.rb
