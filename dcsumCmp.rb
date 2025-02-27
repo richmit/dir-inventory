@@ -179,6 +179,26 @@ opts = OptionParser.new do |opts|
   opts.on(             "--smPDF",            "Macro: PDF file")                   { searchArg.push(['NAME', '\\.pdf$']);       }
   opts.separator "                                       Match PDF file names. Equivalent to:          "
   opts.separator "                                          --sNAME 'pdf$'                                                     "
+  opts.on(             "--smNoDMETA",        "And Macro: Ignore .dircsum dir")    { if (searchArg.empty?) then 
+                                                                                      searchArg = searchArgD.clone
+                                                                                    end
+                                                                                    searchArg.push(['NAME', '\\.dircsum\\/']);
+                                                                                    searchArg.push(['SOP',  :sop_not]);        
+                                                                                    searchArg.push(['SOP',  :sop_and]);        }
+  opts.separator "                                       If search criteria appear before this option, equivalent to:          "
+  opts.separator "                                          --sNAME '\\.dircsum\\/' --soNOT --soAND                            "
+  opts.separator "                                       Otherwise equivalent to adding the following options:                 "
+  opts.separator "                                          --smCHANGE ---sNAME  --soNOT --soAND                               "
+  opts.on(             "--smNoBMETA",          "And Macro: Ignore .backup dir")   { if (searchArg.empty?) then 
+                                                                                      searchArg = searchArgD.clone
+                                                                                    end
+                                                                                    searchArg.push(['NAME', '^\\.backup\\/']);
+                                                                                    searchArg.push(['SOP',  :sop_not]);        
+                                                                                    searchArg.push(['SOP',  :sop_and]);        }
+  opts.separator "                                       If search criteria appear before this option, equivalent to:          "
+  opts.separator "                                          --sNAME '^\\.backup\\/' --soNOT --soAND                            "
+  opts.separator "                                       Otherwise equivalent to adding the following options:                 "
+  opts.separator "                                          --smCHANGE --sNAME '^\\.backup\\/' --soNOT --soAND                 "
   opts.on(             "--smNoGIT",          "And Macro: Ignore GIT")             { if (searchArg.empty?) then 
                                                                                       searchArg = searchArgD.clone
                                                                                     end
